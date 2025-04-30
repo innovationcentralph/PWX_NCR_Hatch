@@ -8,6 +8,9 @@
 #define DCO_1 23
 #define DCO_2 25
 
+#define RELAY_ON HIGH
+#define RELAY_OFF LOW
+
 #define WDT_DONE 12
 
 #define PWR_3V3 15

@@ -3,6 +3,8 @@
 #include "LoRaSenderTask.h"
 #include "SensorMonitorTask.h"
 #include "CLITask.h"
+#include "PinConfig.h"
+#include "KeypadTask.h"
 #include <Wire.h>
 
 void setup() {
@@ -10,9 +12,13 @@ void setup() {
 
   Wire.begin();  
 
+  pinMode(DCO_1, OUTPUT);
+  digitalWrite(DCO_1, RELAY_OFF);
+
   createLoRaQueues();       
   createSensorTasks();     
   createLoRaSenderTask();
+  createKeypadTask();
 
   startCLITask();    
 

@@ -3,6 +3,7 @@
 #include "LoRaSenderTask.h"
 #include <Arduino.h>
 #include "Adafruit_SHT4x.h"
+#include "PinConfig.h"
 
 //Instance creation
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
@@ -193,6 +194,7 @@ void createSensorTasks() {
     NULL,
     [](TimerHandle_t xTimer) {
       Serial.println("[HOT] Timer expired — ALARM would trigger here.");
+      digitalWrite(DCO_1, RELAY_ON);
       enqueueTheftAlarm(HATCH_OPEN);
     });
 
@@ -229,4 +231,5 @@ void stopHotAlarmTimer() {
     xTimerStop(hotAlarmTimer, 0);
     Serial.println("[HOT] Timer stopped globally.");
   }
+  digitalWrite(DCO_1, RELAY_OFF);
 }

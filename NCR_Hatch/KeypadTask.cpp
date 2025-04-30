@@ -44,7 +44,9 @@ void keypadTask(void *pvParameters) {
           if (strncmp(enteredPassword, correctPassword, strlen(correctPassword)) == 0) {
             if (strlen(enteredPassword) == strlen(correctPassword)) {
               Serial.println("[Success] Password correct.");
+              stopHotAlarmTimer();
             } else if (enteredPassword[strlen(correctPassword)] == '0') {
+              stopHotAlarmTimer();
               triggerSilentAlarm();
             }
           } else {

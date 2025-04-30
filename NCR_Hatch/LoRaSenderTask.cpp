@@ -14,7 +14,7 @@ void createLoRaQueues() {
 }
 
 void loraSenderTask(void* pvParameters) {
-  const TickType_t interval = pdMS_TO_TICKS(3000);  // Example interval
+  const TickType_t interval = pdMS_TO_TICKS(3000);  
   TickType_t lastWakeTime = xTaskGetTickCount();
 
   while (1) {
