@@ -90,5 +90,5 @@ void triggerSilentAlarm() {
   Serial.println("[Success] Password correct.");
   Serial.println("[ALARM] Silent alarm triggered!");
 
-  enqueueTheftAlarm(SILENT_ALARM);
+  enqueueTheftAlarm(KEY_SILENT_ALARM);
 }

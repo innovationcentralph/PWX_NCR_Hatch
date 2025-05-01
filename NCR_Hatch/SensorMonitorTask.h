@@ -35,7 +35,7 @@ void stopHotAlarmTimer();
 
 enum TheftAlarmType {
   HATCH_OPEN,
-  SILENT_ALARM
+  KEY_SILENT_ALARM
 };
 
 void enqueueTheftAlarm(TheftAlarmType type);  // Updated declaration

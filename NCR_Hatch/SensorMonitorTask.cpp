@@ -31,7 +31,7 @@ void enqueueTheftAlarm(TheftAlarmType type) {
     case HATCH_OPEN:
       strncpy(alarm.alarmType, "Hatch Open", sizeof(alarm.alarmType) - 1);
       break;
-    case SILENT_ALARM:
+    case KEY_SILENT_ALARM:
       strncpy(alarm.alarmType, "Silent Alarm Triggered", sizeof(alarm.alarmType) - 1);
       break;
     default:
