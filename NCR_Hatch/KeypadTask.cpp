@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include "I2CKeyPad.h"
 #include "SensorMonitorTask.h"
+#include "SystemConfig.h"  // At the top
 
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);
@@ -14,7 +15,7 @@ static char myKeys[16] = {
   '*', '0', '#', 0
 };
 
-static const char correctPassword[] = "123456";
+// static const char correctPassword[] = "123456";
 static char enteredPassword[9];
 static uint8_t inputIndex = 0;
 static uint8_t lastKey = I2C_KEYPAD_NOKEY;
@@ -41,11 +42,11 @@ void keypadTask(void *pvParameters) {
         } else if (key == '#') {
           enteredPassword[inputIndex] = '\0';
 
-          if (strncmp(enteredPassword, correctPassword, strlen(correctPassword)) == 0) {
-            if (strlen(enteredPassword) == strlen(correctPassword)) {
+          if (strncmp(enteredPassword, passkey, strlen(passkey)) == 0) {
+            if (strlen(enteredPassword) == strlen(passkey)) {
               Serial.println("[Success] Password correct.");
               stopHotAlarmTimer();
-            } else if (enteredPassword[strlen(correctPassword)] == '0') {
+            } else if (enteredPassword[strlen(passkey)] == '0') {
               stopHotAlarmTimer();
               triggerSilentAlarm();
             }
@@ -90,5 +91,4 @@ void triggerSilentAlarm() {
   Serial.println("[ALARM] Silent alarm triggered!");
 
   enqueueTheftAlarm(SILENT_ALARM);
-
 }

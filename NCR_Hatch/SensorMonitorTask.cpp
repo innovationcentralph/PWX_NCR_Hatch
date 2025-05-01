@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "Adafruit_SHT4x.h"
 #include "PinConfig.h"
+#include "SystemConfig.h"
 
 //Instance creation
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
@@ -121,10 +122,10 @@ void monitorSHTSensorTask(void *pvParameters) {
   } else {
     Serial.println("Found SHT4x sensor");
     Serial.print("Serial number 0x");
-    Serial.println(sht4.readSerial(), HEX);  // To Ensure communication between MCU and SHT40
+    Serial.println(sht4.readSerial(), HEX);  
 
     // Set SHT Precision
-    sht4.setPrecision(SHT4X_MED_PRECISION);  // The higher the precision, the longer it takes to read
+    sht4.setPrecision(SHT4X_MED_PRECISION); 
     sht4.setHeater(SHT4X_NO_HEATER);
     switch (sht4.getPrecision()) {
       case SHT4X_HIGH_PRECISION:
@@ -189,7 +190,7 @@ void createSensorTasks() {
 
   hotAlarmTimer = xTimerCreate(
     "HotAlarmTimer",
-    pdMS_TO_TICKS(10000),  // 10 seconds
+    pdMS_TO_TICKS(hotAlarmDurationMs),
     pdFALSE,
     NULL,
     [](TimerHandle_t xTimer) {
@@ -222,7 +223,7 @@ void createSensorTasks() {
     NULL,
     0);
 
-  enqueueHeartbeatEvery(15000);  // Send heartbeat every 15 seconds
+  enqueueHeartbeatEvery(heartbeatInterval);
 }
 
 

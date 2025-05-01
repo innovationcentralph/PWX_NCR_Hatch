@@ -5,6 +5,7 @@
 #include "CLITask.h"
 #include "PinConfig.h"
 #include "KeypadTask.h"
+#include "SystemConfig.h"
 #include <Wire.h>
 
 void setup() {
@@ -14,6 +15,8 @@ void setup() {
 
   pinMode(DCO_1, OUTPUT);
   digitalWrite(DCO_1, RELAY_OFF);
+
+  loadConfig();  // Sending Interval, HeartBeat Interval, PassKey, DC Properties
 
   createLoRaQueues();       
   createSensorTasks();     

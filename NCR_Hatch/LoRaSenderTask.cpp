@@ -1,6 +1,7 @@
 // LoRaSenderTask.cpp
 #include "LoRaSenderTask.h"
 #include "SensorMonitorTask.h"
+#include "SystemConfig.h"
 #include <Arduino.h>
 
 QueueHandle_t theftAlarmQueue;
@@ -18,7 +19,7 @@ void loraSenderTask(void* pvParameters) {
   TickType_t lastWakeTime = xTaskGetTickCount();
 
   while (1) {
-    vTaskDelayUntil(&lastWakeTime, interval);
+    vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(loraSendInterval));
 
     // Priority 1: Theft Alarm
     TheftAlarmPayload alarmPayload;
@@ -67,7 +68,7 @@ void loraSenderTask(void* pvParameters) {
     }
 
     // If all queues are empty
-    //Serial.println("[LoRa] No data to send. All queues are empty.");
+    Serial.println("[LoRa] No data to send. All queues are empty.");
   }
 }
 
