@@ -3,7 +3,7 @@
 #define DCI_3 33
 #define DCI_4 32
 #define DCI_5 35
-#define DCI_6 36
+#define DCI_6 34
 
 #define DCO_1 23
 #define DCO_2 25
