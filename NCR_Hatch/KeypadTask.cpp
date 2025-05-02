@@ -79,7 +79,7 @@ void createKeypadTask() {
   xTaskCreatePinnedToCore(
     keypadTask,
     "KeypadTask",
-    2048,
+    4096,//2048,
     NULL,
     1,
     NULL,

@@ -6,7 +6,7 @@
 #include <HardwareSerial.h>
 #include "lorawan.h"
 #include "lorawan_handler.h"
-
+#include "CLITask.h"
 /* Variables */
 /* LoRaWAN Credentials*/
 
@@ -71,20 +71,18 @@ void loraRxTask(void * parameters)
                     sprintf(printBuffer,"APPEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
                     appEUI[0], appEUI[1], appEUI[2], appEUI[3], appEUI[4], appEUI[5], appEUI[6], appEUI[7] );
                     Serial.print(printBuffer);
-
-                    processDlAppeui(appEUI);
-                  break; 
                   }
+                  break; 
+                  
                   case DL_DEVEUI_ID: {
                     uint8_t devEUI[8];
                     memcpy(devEUI, &numData[1], 8 * sizeof(uint8_t));
                     sprintf(printBuffer,"DEVEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
                     devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
                     Serial.print(printBuffer);
-
-                    processDlDeveui(devEUI);
-                  break; 
                   }
+                  break; 
+                  
                   case DL_APPKEY_ID: 
                     uint8_t appKEY[16];
                     memcpy(appKEY, &numData[1], 16 * sizeof(uint8_t));
@@ -93,22 +91,24 @@ void loraRxTask(void * parameters)
                     appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
                     Serial.print(printBuffer);
 
-                    processDLAppkey(appKEY); 
                   break; 
-                  case DL_TX_INTERVAL_ID: {
+                  case DL_TX_INTERVAL_ID: {  
+                    Serial.println("DL LoRa TX Interval");
+                    String cmd = "AT+SET_LORA_INTERVAL=";
+                    uint16_t txInt = (uint16_t)((numData[1] << 8) | numData[2]);
                     Serial.print("Tx Interval: ");
-                    uint16_t txInt = (uint16_t)((numData[1] << 4) | numData[2]);
-                    Serial.println(txInt);
-
-                    processDLTxinterval(txInt);   
-                  break;
+                    cmd += (String)txInt; 
+                    Serial.println(cmd);
+                    handleCLICommand(cmd); 
                   } 
+                  break;
+                 
                   
                   case DL_RESET_ID: 
                     Serial.print("Reset");
                     lorawanSerial.print("ATZ\r");
-                    delay(10);
-                    // ESP.restart();
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                    ESP.restart();
 
                   break; 
 
@@ -116,36 +116,70 @@ void loraRxTask(void * parameters)
                     Serial.print("Hot DC: ");
                     Serial.println(numData[1]);
     
-                    processDLHotDc(numData[1]); 
                   break; 
-
-                  case DL_PASSKEY_ID: 
-                    Serial.print("PASSKEY: ");
-                    uint8_t passkey[6]; 
-                    memcpy(passkey, &numData[1], 6 * sizeof(uint8_t));
-                    sprintf(printBuffer,"Passkey = %02X-%02X-%02X-%02X-%02X-%02X\r\n", 
-                    passkey[0], passkey[1], passkey[2], passkey[3], passkey[4], passkey[5] );
-                    Serial.println(printBuffer);
-
-
-                    processDLPasskey(passkey); 
+                  case DL_HEARTBEAT_INTERVAL_ID: {
+                    Serial.print("DL Heartbeat Interval");
+                    String cmd = "AT+SET_HEARTBEAT_INTERVAL=";
+                    uint16_t hbInt = (uint16_t)((numData[1] << 8) | numData[2]);
+                    
+                    cmd += (String)hbInt; 
+                    Serial.println(cmd);
+                    handleCLICommand(cmd); 
+                  }
+                  break; 
+                  
+                  case  DL_DC_STATES_ID: {
+                    Serial.println("DL DC States ");
+                    String cmd = "AT+SET_HOT=";
+                    for(int i = 0; i < 6; i++ )
+                    {
+                      cmd += ((numData[1] >> i) & 0x01) ? '1' : '0';
+                      if(i < 5) cmd += ',';
+                    }
+                    Serial.println(cmd);
+                    handleCLICommand(cmd); 
+                  }
+                  break; 
+                  
+                   case  DL_HOT_TIMEOUT_ID: {
+                    Serial.println("DL Hot Timeout");
+                    String cmd = "AT+SET_HOT_TIMEOUT=";
+                    uint16_t hotTimeout = (uint16_t)((numData[1] << 8) | numData[2]);
+                    
+                    cmd += (String)hotTimeout; 
+                    Serial.println(cmd);
+                    handleCLICommand(cmd); 
+                  }
+                  break; 
+                  
+                  case DL_PASSKEY_ID: {
+                    Serial.println("DL Passkey");
+                    String cmd = "AT+SET_PASSKEY="; 
+                    for(int i = 0; i < (len/2)-1; i ++ )
+                    {
+                      Serial.print((char)numData[i+1]);
+                      cmd += (char)numData[i+1];
+                    }
+                    Serial.println(" ");
+                    Serial.println(cmd);// for debug only 
+                    handleCLICommand(cmd); 
+                  }
                   break; 
                   
                   
                   case DL_KEY_UPDATE_ENABLE_ID: 
                     Serial.print("Update credentials enable");
-                    /* Todo: add callback */ 
+    
                   break; 
 
                   case DL_KEY_UPDATE_DISABLE_ID: 
                     Serial.print("Update credentials disable");
-                    /* Todo: add callback */ 
+
                   break; 
 
                   case DL_SAVE_SETTINGS_ID: 
                     Serial.print("Saving Settings");
-                    /* Todo: Uncomment and complete Callback function Here*/
-                    processSaveSettings(); 
+        
                   break; 
                   default: 
                   break; 
@@ -277,7 +311,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   int err; 
   char buffer[MAX_BUFFER_SIZE];
 
-  delay(3000);
+  vTaskDelay(pdMS_TO_TICKS(3000));
   // empty rx buffer.
   // unsigned long startTime = millis();
   // String reply;
@@ -287,7 +321,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
 
   /* Check connection with at SLAVE */
   lorawanSerial.print("AT\r\n");
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   err = checkResponse(buffer, INVALID_CONNECTION); 
   if(err) return err;  
   Serial.print("Connection is valid \n\r"); 
@@ -300,7 +334,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   
   lorawanSerial.print(buffer);
   
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_APPEUI); 
   if(err) return err;  
@@ -311,7 +345,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
 
   lorawanSerial.print(buffer);
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_DEUI); 
   if(err) return err;  
@@ -322,7 +356,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
           appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
           appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
   lorawanSerial.print(buffer);
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_APPKEY); 
   if(err) return err;  
@@ -333,7 +367,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
           appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
           appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
   lorawanSerial.print(buffer);
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_NWKKEY); 
   if(err) return err;  
@@ -344,7 +378,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
           appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
           appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
   lorawanSerial.print(buffer);
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_APPSKEY); 
   if(err) return err;  
@@ -355,7 +389,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
           appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
           appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
   lorawanSerial.print(buffer);
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_NWKSKEY); 
   if(err) return err;  
@@ -365,7 +399,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   sprintf(buffer,"AT+DADDR=%02X:%02X:%02X:%02X\r\n", 
           devADDR[0], devADDR[1], devADDR[2], devADDR[3]);
   lorawanSerial.print(buffer);
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
   err = checkResponse(buffer, FAILED_WRITE_DADDR); 
   if(err) return err;  
@@ -374,12 +408,12 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   /* Set devADDR */
 
   lorawanSerial.print("AT+CS\r");
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   err = checkResponse(buffer, FAILED_SAVE_SETTINGS); 
   if(err) return err;  
   Serial.print("Configuration is saved successfully \n\r"); 
 
-  delay(100);
+  vTaskDelay(pdMS_TO_TICKS(100));
   /* Set Joining */
   Serial.print("Joining."); 
   memset(buffer, 0, sizeof(buffer)); 
@@ -392,7 +426,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
     startTime = millis();
 
     lorawanSerial.print("AT+JOIN=1\r");
-    delay(10);
+    vTaskDelay(pdMS_TO_TICKS(10));
     String c;
     while ((millis() - startTime) < 10000) {
         while (lorawanSerial.available()) {
@@ -403,10 +437,10 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
             }
              Serial.println(c); 
         }
-        delay(10); 
+        vTaskDelay(pdMS_TO_TICKS(10)); 
     }
  
-    delay(5000);
+    vTaskDelay(pdMS_TO_TICKS(5000));
   }
   Serial.println("\n\rJOINED SUCCESSFULLY \n\r");
   return 0; 
@@ -415,12 +449,12 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
 
 int switchClass(void)
 {
-  delay(5000);
+  vTaskDelay(pdMS_TO_TICKS(5000));
   char buffer[MAX_BUFFER_SIZE];
   int  err;  
   /* Switch Class */
   lorawanSerial.print("AT+CLASS=C\r");
-  delay(10);
+  vTaskDelay(pdMS_TO_TICKS(10));
   err = checkResponse(buffer, FAILED_SWITCH_CLASS); 
   if(err) return err;  
   Serial.print("Switched to class C \n\r"); 
@@ -428,12 +462,12 @@ int switchClass(void)
 
   /* Initial Transmission */
   lorawanSerial.print("AT+SEND=10:0:1234\r\n");
-  delay(10);
+  vTaskDelay(pdMS_TO_TICKS(10));
   err = checkResponse(buffer, FAILED_TX_UNCONFIRMED); 
   if(err) return err;  
   Serial.print("Initial transmission done \n\r"); 
 
-  delay(5000);
+  vTaskDelay(pdMS_TO_TICKS(5000));
   return 0;
 }
 
@@ -478,68 +512,14 @@ void processSendConfirmed(void) {
         sendConfCallback();
     }
 }
-void processDlAppeui(uint8_t * appEUI) {
-    if (saveAppeuiCallback) {
-        saveAppeuiCallback(appEUI);
-    }
-}
-void processDlDeveui(uint8_t * devEUI) {
-    if (saveDeveuiCallback) {
-        saveDeveuiCallback(devEUI);
-    }
-}
-void processDLAppkey(uint8_t * appKey) {
-    if (saveAppkeyCallback) {
-        saveAppkeyCallback(appKey);
-    }
-}
-void processDLTxinterval(uint16_t txInterval) {
-    if (saveTxIntervalCallback) {
-        saveTxIntervalCallback(txInterval);
-    }
-}
-void processDLHotDc(uint16_t hotDc) {
-    if (saveHotDcCallback) {
-        saveHotDcCallback(hotDc);
-    }
-}
-
-void processDLPasskey(uint8_t * passkey) {
-    if (savePasskeyCallback) {
-        savePasskeyCallback(passkey);
-    }
-}
-void processSaveSettings(void) {
-    if (saveSettingsCallback) {
-        saveSettingsCallback();
-    }
-}
-
 
 
 /* Register callback  */
+void registerOkCallback(void (*callback)(void)) {
+    okCallback = callback;
+}
+
 void registerSendConfirmedCallback(void (*callback)(void)) {
     sendConfCallback = callback;
-}
-void registerSaveAppeuiCallback(void (*callback)(uint8_t *)) {
-    saveAppeuiCallback = callback;
-}
-void registerSaveDeveuiCallback(void (*callback)(uint8_t *)) {
-    saveDeveuiCallback = callback;
-}
-void registerSaveAppkeyCallback(void (*callback)(uint8_t *)) {
-    saveAppkeyCallback = callback;
-}
-void registerSaveTxIntervalCallback(void (*callback)(uint16_t)) {
-    saveTxIntervalCallback = callback;
-}
-void registerSaveHotDcCallback(void (*callback)(uint8_t)) {
-    saveHotDcCallback = callback;
-}
-void registerSaveSettingsCallback(void (*callback)(void)) {
-    saveSettingsCallback = callback;
-}
-void registerPasskeyCallback(void (*callback)(uint8_t *)) {
-    savePasskeyCallback = callback;
 }
 
