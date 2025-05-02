@@ -42,7 +42,7 @@ void setup() {
   createLoRaQueues();
   createSensorTasks();
   createLoRaSenderTask();
-  // createKeypadTask();
+  createKeypadTask();
   
   startCLITask();
   xTaskCreatePinnedToCore(
