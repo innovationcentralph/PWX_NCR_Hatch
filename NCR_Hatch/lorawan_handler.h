@@ -13,11 +13,14 @@ typedef enum
   DL_APPEUI_ID = 1,
   DL_DEVEUI_ID,
   DL_APPKEY_ID,
-  DL_TX_INTERVAL_ID,
+  DL_TX_INTERVAL_ID,//
   DL_RESET_ID,
   DL_HOT_DC_ID,
-  DL_PASSKEY_ID,
-  DL_SAVE_SETTINGS_ID = 0x0A,
+  DL_HEARTBEAT_INTERVAL_ID, // 
+  DL_DC_STATES_ID, //
+  DL_HOT_TIMEOUT_ID,//
+  DL_PASSKEY_ID, // 
+  DL_SAVE_SETTINGS_ID,
   DL_KEY_UPDATE_ENABLE_ID = 0xA5,
   DL_KEY_UPDATE_DISABLE_ID = 0x5A, 
 }DOWNLINK_IDS; 
@@ -57,36 +60,13 @@ int checkResponse (char * buffer, ERROR_MSGS errMsg);
 /* Function pointers */
 static void (*okCallback)(void) = NULL;
 static void (*sendConfCallback)(void) = NULL;
-static void (*saveAppeuiCallback)(uint8_t * appEUI) = NULL;
-static void (*saveDeveuiCallback)(uint8_t * devEUI) = NULL;
-static void (*saveAppkeyCallback)(uint8_t * appKey) = NULL;
-static void (*saveTxIntervalCallback)(uint16_t txInterval) = NULL; 
-static void (*saveHotDcCallback)(uint8_t hotDc) = NULL; 
-static void (*saveSettingsCallback)(void) = NULL;
-static void (*savePasskeyCallback)(uint8_t * passkey) = NULL;
-
 
 // call back fuctions 
 void processOK(void);
 void processSendConfirmed(void);
-void processDlAppeui(uint8_t * appEUI);
-void processDlDeveui(uint8_t * devEUI);
-void processDLAppkey(uint8_t * appKey);
-void processDLTxinterval(uint16_t txInterval);
-void processDLHotDc(uint16_t hotDc);
-void processDLPasskey(uint8_t * passkey);
-void processSaveSettings(void);
-
 
 /* Register callback  */
 void registerSendConfirmedCallback(void (*callback)(void));
-void registerSaveAppeuiCallback(void (*callback)(uint8_t *));
-void registerSaveDeveuiCallback(void (*callback)(uint8_t *));
-void registerSaveAppkeyCallback(void (*callback)(uint8_t *));
-void registerSaveTxIntervalCallback(void (*callback)(uint16_t));
-void registerSaveHotDcCallback(void (*callback)(uint8_t));
-void registerSaveSettingsCallback(void (*callback)(void));
-void registerPasskeyCallback(void (*callback)(uint8_t *));
 
 
 #endif
