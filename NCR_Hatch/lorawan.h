@@ -20,6 +20,7 @@ typedef enum
 	HEARTBEAT,// (Un confirmed uplink every 15mins)
 	DIAGNOSTIC,
 	EVENTS, 
+    KEYS,
 
 } PAYLOAD_TYPE;
 
@@ -31,7 +32,16 @@ typedef enum
     HUM_THRESHOLD,
     
 }EVENT_TYPE; 
-
+typedef enum 
+{
+    CORRECT_PASSKEY,
+    INCORRECT_PASSKEY,
+}PASSKEY_STAT; 
+typedef enum 
+{
+    SILENT,
+    NOT_SILENT,
+}PASSKEY_TYPE; 
 typedef union 
 {
     uint8_t all;
@@ -78,6 +88,7 @@ typedef struct
     int16 battCurr;
 }diagnosticPayload_s; 
 
+
 typedef struct
 {
     int16 temperature; 
@@ -86,13 +97,20 @@ typedef struct
     dryContact_u dryContactStat; 
 }hearbeatPayload_s; 
 
+typedef struct
+{
+    PASSKEY_STAT passkeyStat; 
+    PASSKEY_TYPE passkeyType; 
+    uint8_t len;
+    char passk[8];
+}keysPayload_s; 
 
 
 static alarmPayload_s alarmPayload; 
 static eventsPayload_s eventsPayload; 
 static diagnosticPayload_s diagnosticPayload; 
 static hearbeatPayload_s heartbeatPayload; 
-
+static keysPayload_s keysPayload; 
 
 
 /*To access structure outside the code  */
@@ -100,6 +118,7 @@ alarmPayload_s * getAlarmPayloadInstance();
 eventsPayload_s * getEventsPayloadInstance(); 
 diagnosticPayload_s * getDiagnosticPayloadInstance();
 hearbeatPayload_s * heartbeatPayloadInstance();
+keysPayload_s * keysPayloadInstance();
 
 typedef void (*serial_tx_function_t)(const char*);
 

@@ -88,6 +88,22 @@ function Decoder(bytes, port) {
             decoded.DC5= data[4] & 0x10 ? "ON" : "OFF";
             decoded.DC6= data[4] & 0x20 ? "ON" : "OFF";
         } 
+        else if (data[0] === 0xA6){
+            decoded.PAYLOAD_TYPE = "KEYS"; 
+            data = data.slice(1);
+            decoded.PASSKEY_TYPE = data[0] & 0x1? "INCORRECT PASSKEY": "CORRECT PASSKEY" ;
+            data = data.slice(1);
+            decoded.PASSKEY_STAT = data[0] & 0x1? "NOT SILENT": "SILENT" ;
+            data = data.slice(1);
+            PASSKEY = [];
+            for (var i = 0; i < data.length; i++) {
+                if (data[i] !== 0xFF) {  // or 0 if you're using 0x00 as "empty"
+                  PASSKEY.push(data[i]);
+                }
+            }
+            decoded.PASSKEY_STR = String.fromCharCode(...PASSKEY);
+            
+        }
     }
 
     if (port === 69) { 
