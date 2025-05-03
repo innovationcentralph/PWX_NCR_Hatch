@@ -27,6 +27,11 @@ hearbeatPayload_s * heartbeatPayloadInstance()
 {
     return &heartbeatPayload; 
 }
+keysPayload_s * keysPayloadInstance()
+{
+    return &keysPayload;
+}
+
 
 void lora_serial_init(serial_tx_function_t logger) {
     serial_tx = logger;
@@ -81,6 +86,20 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             txBuffer[len++]= eventsPayload.humidity.upper; 
             txBuffer[len++]= eventsPayload.humidity.lower; 
             txBuffer[len++]= (uint8_t)eventsPayload.dryContactStat.all; 
+            break;
+        case KEYS:
+            // printf("Events\n\r"); 
+            txBuffer[len++]= (uint8_t)KEYS; 
+            txBuffer[len++]= keysPayload.passkeyStat; 
+            txBuffer[len++]= keysPayload.passk[0];
+            txBuffer[len++]= keysPayload.passk[1];
+            txBuffer[len++]= keysPayload.passk[2];
+            txBuffer[len++]= keysPayload.passk[3];
+            if(keysPayload.len > 4) txBuffer[len++]= keysPayload.passk[4];
+            if(keysPayload.len > 5) txBuffer[len++]= keysPayload.passk[5];
+            if(keysPayload.len > 6) txBuffer[len++]= keysPayload.passk[6];
+            if(keysPayload.len > 7) txBuffer[len++]= keysPayload.passk[7];
+
             break;
         default:
         break; 

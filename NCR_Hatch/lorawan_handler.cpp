@@ -20,7 +20,7 @@ hearbeatPayload_s * hbPayloadPtr;
 diagnosticPayload_s * diagnosticPayloadPtr; 
 eventsPayload_s * eventPayloadPtr; 
 alarmPayload_s * alarmPayloadPtr; 
-
+keysPayload_s * keysPayloadPtr;
 /* Utility */
 void stringToHex(char * strBuffer, uint8_t * hexBuffer )
 {
@@ -208,79 +208,22 @@ void loraRxTask(void * parameters)
 
 void loraTxTask(void * parameters)
 { 
-  hbPayloadPtr = heartbeatPayloadInstance();
-  diagnosticPayloadPtr = getDiagnosticPayloadInstance();
-  eventPayloadPtr = getEventsPayloadInstance();
-  alarmPayloadPtr = getAlarmPayloadInstance();  
+  /* KEYS Payload Test Code */
+  keysPayloadPtr = keysPayloadInstance();  
   TickType_t lastWakeTime = xTaskGetTickCount();
   while(1)
   {
     int err;
-    if(count ==0)
-    {
-      hbPayloadPtr->temperature.all = 334;// 33.4 multiplied by 10 
-      hbPayloadPtr->humidity.all = 501;// 33.4 multiplied by 10
-      hbPayloadPtr->siren = 1;// 
-      hbPayloadPtr->dryContactStat.dc1  = 1;
-      hbPayloadPtr->dryContactStat.dc2  = 0;
-      hbPayloadPtr->dryContactStat.dc3  = 1;
-      hbPayloadPtr->dryContactStat.dc4  = 0;
-      hbPayloadPtr->dryContactStat.dc5  = 1;
-      hbPayloadPtr->dryContactStat.dc6  = 0;
 
-      err = processUplink(HEARTBEAT,  UNCONFIRMED_UPLINK);
-      
-    }
-    else if(count == 1)
-    {
-      diagnosticPayloadPtr->dcVolt.all = 261; // 10.6v multiplied by 10 
-      diagnosticPayloadPtr->dcCurr.all = 53; // 51v multiplied by 10 
-      diagnosticPayloadPtr->battVolt.all = 96; // 10.6v multiplied by 10 
-      diagnosticPayloadPtr->battCurr.all = 31; // 51v multiplied by 10 
-     
-
-      err = processUplink(DIAGNOSTIC,  UNCONFIRMED_UPLINK);
-    }
-    else if(count == 2)
-    {
-      alarmPayloadPtr->dryContactStat.dc1  = 1;
-      alarmPayloadPtr->dryContactStat.dc2  = 0;
-      alarmPayloadPtr->dryContactStat.dc3  = 1;
-      alarmPayloadPtr->dryContactStat.dc4  = 0;
-      alarmPayloadPtr->dryContactStat.dc5  = 1;
-      alarmPayloadPtr->dryContactStat.dc6  = 0;
-      err = processUplink(ALARM_THEFT,  CONFIRMED_UPLINK);
-    }
-    else if(count == 3)
-    {
-      alarmPayloadPtr->dryContactStat.dc1  = 1;
-      alarmPayloadPtr->dryContactStat.dc2  = 0;
-      alarmPayloadPtr->dryContactStat.dc3  = 1;
-      alarmPayloadPtr->dryContactStat.dc4  = 0;
-      alarmPayloadPtr->dryContactStat.dc5  = 1;
-      alarmPayloadPtr->dryContactStat.dc6  = 0;
-      err = processUplink(SILENT_ALARM,  CONFIRMED_UPLINK);
-    }
-    else if(count == 4)
-    {
-      eventPayloadPtr->eventOccured = DC_CHANGE_OF_STATE; 
-      eventPayloadPtr->temperature.all =  333; 
-      eventPayloadPtr->humidity.all = 555; 
-      eventPayloadPtr->dryContactStat.dc1  = 1;
-      eventPayloadPtr->dryContactStat.dc2  = 0;
-      eventPayloadPtr->dryContactStat.dc3  = 1;
-      eventPayloadPtr->dryContactStat.dc4  = 0;
-      eventPayloadPtr->dryContactStat.dc5  = 1;
-      eventPayloadPtr->dryContactStat.dc6  = 0;
-      err = processUplink(EVENTS,  CONFIRMED_UPLINK);
-    }
-    count = count + 1; 
-
-    if (count > 4)
-    {
-      count =0; 
-    }
-
+    keysPayloadPtr->passkeyStat = CORRECT_PASSKEY;
+    keysPayloadPtr->len = 6;
+    keysPayloadPtr->passk[0] = '1';
+    keysPayloadPtr->passk[1] = '2';
+    keysPayloadPtr->passk[2] = '3';
+    keysPayloadPtr->passk[3] = '4';
+    keysPayloadPtr->passk[4] = '5';
+    keysPayloadPtr->passk[5] = '6';
+    err = processUplink(KEYS,  CONFIRMED_UPLINK);
     if(err) 
     {
       Serial.println("Sending Error");
@@ -288,7 +231,7 @@ void loraTxTask(void * parameters)
     else {
       Serial.println("Sending Done");
     }
-    vTaskDelayUntil(&lastWakeTime, txInterval / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&lastWakeTime, 10000 / portTICK_PERIOD_MS);
   }
 }
 

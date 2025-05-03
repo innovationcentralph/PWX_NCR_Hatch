@@ -42,7 +42,7 @@ void setup() {
   createLoRaQueues();
   createSensorTasks();
   createLoRaSenderTask();
-  createKeypadTask();
+  // createKeypadTask();
   
   startCLITask();
   xTaskCreatePinnedToCore(
@@ -54,7 +54,6 @@ void setup() {
       NULL,
       1
     ); 
-  
   
   Serial.println("System Initialized");
 }
