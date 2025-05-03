@@ -91,6 +91,7 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             // printf("Events\n\r"); 
             txBuffer[len++]= (uint8_t)KEYS; 
             txBuffer[len++]= keysPayload.passkeyStat; 
+            txBuffer[len++]= keysPayload.passkeyType; 
             txBuffer[len++]= keysPayload.passk[0];
             txBuffer[len++]= keysPayload.passk[1];
             txBuffer[len++]= keysPayload.passk[2];

@@ -37,7 +37,11 @@ typedef enum
     CORRECT_PASSKEY,
     INCORRECT_PASSKEY,
 }PASSKEY_STAT; 
-
+typedef enum 
+{
+    SILENT,
+    NOT_SILENT,
+}PASSKEY_TYPE; 
 typedef union 
 {
     uint8_t all;
@@ -96,6 +100,7 @@ typedef struct
 typedef struct
 {
     PASSKEY_STAT passkeyStat; 
+    PASSKEY_TYPE passkeyType; 
     uint8_t len;
     char passk[8];
 }keysPayload_s; 

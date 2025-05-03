@@ -216,6 +216,7 @@ void loraTxTask(void * parameters)
     int err;
 
     keysPayloadPtr->passkeyStat = CORRECT_PASSKEY;
+    keysPayloadPtr->passkeyType = SILENT;
     keysPayloadPtr->len = 6;
     keysPayloadPtr->passk[0] = '1';
     keysPayloadPtr->passk[1] = '2';

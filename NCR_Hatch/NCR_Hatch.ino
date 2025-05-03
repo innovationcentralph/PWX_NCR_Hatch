@@ -53,8 +53,8 @@ void setup() {
       7,    
       NULL,
       1
-    ); 
-  
+    );
+
   Serial.println("System Initialized");
 }
 
