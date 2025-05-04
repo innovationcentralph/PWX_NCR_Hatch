@@ -4,10 +4,12 @@
 #include "I2CKeyPad.h"
 #include "SensorMonitorTask.h"
 #include "SystemConfig.h"  // At the top
-#include "LoRaSenderTask.h" 
+#include "LoRaSenderTask.h"
+#include <LiquidCrystal_I2C.h>
 
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);
+LiquidCrystal_I2C lcd(0x26, 16, 2);
 
 static char myKeys[16] = {
   '1', '2', '3', 0,
@@ -30,6 +32,13 @@ void keypadTask(void* pvParameters) {
   keyPad.setKeyPadMode(I2C_KEYPAD_4x4);
   keyPad.loadKeyMap(myKeys);
 
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor((16 - strlen("ENTER PASSKEY")) / 2, 0);
+  lcd.print("ENTER PASSKEY");
+  lcd.setCursor(0, 1);
+  lcd.print("                ");  // clear
+
   while (1) {
     uint8_t currentKey = keyPad.getKey();
 
@@ -41,6 +50,8 @@ void keypadTask(void* pvParameters) {
           inputIndex = 0;
           memset(enteredPassword, 0, sizeof(enteredPassword));
           Serial.println("[Clear] Input cleared.");
+          lcd.setCursor(0, 1);
+          lcd.print("                ");  // clear line
         } else if (key == '#') {
           enteredPassword[inputIndex] = '\0';
 
@@ -62,8 +73,24 @@ void keypadTask(void* pvParameters) {
             Serial.print("[Failed] You entered: ");
             Serial.println(enteredPassword);
           }
-       
+
           enqueuePasskeyPayload(enteredPassword, inputIndex, isCorrect, isSilent);
+
+          // Show result on LCD
+          lcd.setCursor(0, 1);
+          lcd.print("                ");
+          if (isCorrect) {
+            lcd.setCursor((16 - strlen("Correct")) / 2, 1);
+            lcd.print("Correct");
+          } else {
+            lcd.setCursor((16 - strlen("Wrong!")) / 2, 1);
+            lcd.print("Wrong!");
+          }
+
+          vTaskDelay(pdMS_TO_TICKS(1500));  // show result for 1.5s
+          lcd.setCursor(0, 1);
+          lcd.print("                ");  // clear
+          inputIndex = 0;
 
           inputIndex = 0;
           memset(enteredPassword, 0, sizeof(enteredPassword));
@@ -72,6 +99,14 @@ void keypadTask(void* pvParameters) {
           enteredPassword[inputIndex++] = key;
           Serial.print("Key Entered: ");
           Serial.println(key);
+
+          lcd.setCursor(0, 1);
+          lcd.print("                ");
+          lcd.setCursor((16 - inputIndex) / 2, 1);
+          for (uint8_t i = 0; i < inputIndex; i++) {
+            lcd.print("*");
+          }
+
         } else {
           Serial.println("[Error] Too many digits. Press * to clear.");
         }
