@@ -273,6 +273,9 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   memset(buffer, 0, sizeof(buffer)); 
 
   /* Set APPEUI */
+  Serial.printf("AT+APPEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+  appEUI[0], appEUI[1], appEUI[2], appEUI[3], appEUI[4], appEUI[5], appEUI[6], appEUI[7] );
+  
   sprintf(buffer,"AT+APPEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
   appEUI[0], appEUI[1], appEUI[2], appEUI[3], appEUI[4], appEUI[5], appEUI[6], appEUI[7] );
   
@@ -288,6 +291,11 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   sprintf(buffer,"AT+DEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
   devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
 
+
+  Serial.printf("AT+DEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+  devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
+
+
   lorawanSerial.print(buffer);
   vTaskDelay(pdMS_TO_TICKS(100));
   memset(buffer, 0, sizeof(buffer)); 
@@ -296,6 +304,10 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   Serial.print("DEUI is set\n\r"); 
 
   /* Set appKEY */
+  Serial.printf("AT+APPKEY=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+          appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
+          appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
+
   sprintf(buffer,"AT+APPKEY=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
           appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
           appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);

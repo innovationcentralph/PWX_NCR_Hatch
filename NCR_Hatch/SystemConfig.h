@@ -28,6 +28,12 @@
 #define EEPROM_HOT_FLAGS_ADDR          20  
 #define EEPROM_HOT_TIMEOUT_ADDR        24 
 
+
+#define EEPROM_ADDR_DEVEUI   100        // 8 bytes
+#define EEPROM_ADDR_APPEUI   (EEPROM_ADDR_DEVEUI + 8)   // 108
+#define EEPROM_ADDR_APPKEY   (EEPROM_ADDR_APPEUI + 8)   // 116
+
+
 // Default value if EEPROM is empty
 #define DEFAULT_SEND_INTERVAL_MS       6000
 #define DEFAULT_HEARTBEAT_INTERVAL_MS  15000
@@ -39,6 +45,10 @@ extern uint32_t heartbeatInterval;
 extern uint32_t hotAlarmDurationMs;
 extern char passkey[9];
 
+extern uint8_t devEUI[8];
+extern uint8_t appEUI[8];
+extern uint8_t appKEY[16];
+
 void loadConfig();
 void saveSendInterval(uint32_t interval);
 void saveHeartbeatInterval(uint32_t interval);
@@ -47,3 +57,9 @@ void saveHotConfig();
 void loadHotConfig();
 void saveHotTimeout(uint32_t value);
 
+void saveDevEUI(const uint8_t* newEUI);
+void loadDevEUI();
+void saveAppEUI(const uint8_t* newAppEUI);
+void loadAppEUI();
+void saveAppKEY(const uint8_t* newAppKEY);
+void loadAppKEY();

@@ -8,9 +8,9 @@
 #include <Wire.h>
 #include "lorawan_handler.h"
 
-uint8_t devEUI[8] = { 0x10, 0x10, 0x10, 0x10, 0x07, 0xDF, 0xF6, 0x6C };  
-uint8_t appEUI[8] = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 };
-uint8_t appKEY[16] = { 0x8A, 0xD7, 0x3D, 0x3D, 0x3B, 0x47, 0xD4, 0x3E, 0xF5, 0xB2, 0xF8, 0x25, 0x26, 0xAA, 0x0C, 0x22 };
+uint8_t devEUI[8];  
+uint8_t appEUI[8];
+uint8_t appKEY[16];
 uint8_t devADDR[4] = { 0xE0, 0x24, 0x0A, 0x4F };
 
 bool isLoRaReady = false;  // Set true after LoRa is initialized
@@ -20,7 +20,7 @@ void wdtReset();
 // LoRa initialization task
 void loraInitTask(void* pvParameters) {
   int err;
-  
+
   initLoraSerial();
 
   while (!isLoRaReady) {
@@ -52,7 +52,7 @@ void setup() {
   digitalWrite(DCO_1, RELAY_OFF);
 
   // Load config before sensor/tasks
-  loadConfig();  // Includes intervals, passkey, HOT config
+  loadConfig();  // Includes intervals, passkey, HOT config, 
 
   // Start non-blocking LoRa initialization
   xTaskCreatePinnedToCore(

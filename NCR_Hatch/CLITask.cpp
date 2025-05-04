@@ -139,6 +139,99 @@ void handleCLICommand(const String& command) {
     Serial.printf("[CLI] Current HOT alarm timeout: %lu ms\n", hotAlarmDurationMs);
   }
 
+  else if (command.startsWith("AT+SET_DEVEUI=")) {
+    String hexStr = command.substring(strlen("AT+SET_DEVEUI="));
+    hexStr.trim();
+    if (hexStr.length() != 16) {
+      Serial.println("[CLI] Invalid length. Must be 16 hex characters.");
+      return;
+    }
+
+    uint8_t newEUI[8];
+    for (int i = 0; i < 8; i++) {
+      String byteStr = hexStr.substring(i * 2, i * 2 + 2);
+      newEUI[i] = strtoul(byteStr.c_str(), NULL, 16);
+    }
+
+    saveDevEUI(newEUI);
+    Serial.println("[CLI] devEUI updated. Restart to take effect.");
+  }
+
+  else if (command.equalsIgnoreCase("AT+GET_DEVEUI")) {
+    Serial.print("[CLI] devEUI = ");
+    for (int i = 0; i < 8; i++) {
+      Serial.printf("%02X", devEUI[i]);
+    }
+    Serial.println();
+  }
+
+  else if (command.startsWith("AT+SET_APPEUI=")) {
+    String hexStr = command.substring(strlen("AT+SET_APPEUI="));
+    hexStr.trim();
+
+    if (hexStr.length() != 16) {
+      Serial.println("[CLI] Invalid length. AppEUI must be 16 hex characters (8 bytes).");
+      return;
+    }
+
+    uint8_t newAppEUI[8];
+    for (int i = 0; i < 8; i++) {
+      String byteStr = hexStr.substring(i * 2, i * 2 + 2);
+      newAppEUI[i] = (uint8_t)strtol(byteStr.c_str(), NULL, 16);
+    }
+
+    saveAppEUI(newAppEUI);
+    Serial.print("[CLI] AppEUI updated to: ");
+    for (int i = 0; i < 8; i++) {
+      Serial.printf("%02X", appEUI[i]);
+    }
+    Serial.println();
+  }
+
+  else if (command.equalsIgnoreCase("AT+GET_APPEUI")) {
+    Serial.print("[CLI] Current AppEUI: ");
+    for (int i = 0; i < 8; i++) {
+      Serial.printf("%02X", appEUI[i]);
+    }
+    Serial.println();
+  }
+
+  else if (command.startsWith("AT+SET_APPKEY=")) {
+    String hexStr = command.substring(strlen("AT+SET_APPKEY="));
+    hexStr.trim();
+
+    if (hexStr.length() != 32) {
+      Serial.println("[CLI] Invalid length. AppKey must be 32 hex characters (16 bytes).");
+      return;
+    }
+
+    uint8_t newAppKey[16];
+    for (int i = 0; i < 16; i++) {
+      String byteStr = hexStr.substring(i * 2, i * 2 + 2);
+      newAppKey[i] = (uint8_t)strtol(byteStr.c_str(), NULL, 16);
+    }
+
+    saveAppKEY(newAppKey);
+    Serial.print("[CLI] AppKey updated to: ");
+    for (int i = 0; i < 16; i++) {
+      Serial.printf("%02X", appKEY[i]);
+    }
+    Serial.println();
+  }
+
+  else if (command.equalsIgnoreCase("AT+GET_APPKEY")) {
+    Serial.print("[CLI] Current AppKey: ");
+    for (int i = 0; i < 16; i++) {
+      Serial.printf("%02X", appKEY[i]);
+    }
+    Serial.println();
+  }
+
+
+
+
+
+
   else if (command.equalsIgnoreCase("AT+HELP") || command.equalsIgnoreCase("?")) {
     Serial.println(F("\n--- Available CLI Commands ---"));
     Serial.println(F("AT+HELP or ?                    - Show this help menu"));
@@ -154,9 +247,18 @@ void handleCLICommand(const String& command) {
     Serial.println(F("AT+GET_HOT                     - Show current HOT DCI flags"));
     Serial.println(F("AT+SET_PASSKEY=<4-8 digit key> - Set passkey"));
     Serial.println(F("AT+GET_PASSKEY                 - Show current passkey"));
+    Serial.println(F("AT+SET_DEVEUI=<16 hex chars>    - Set DevEUI (e.g., AT+SET_DEVEUI=1010101007DFF66C)"));
+    Serial.println(F("AT+GET_DEVEUI                   - Show current DevEUI"));
+
+    Serial.println(F("AT+SET_APPEUI=<16 HEX>           - Set AppEUI (8 bytes, hex format)"));
+    Serial.println(F("AT+GET_APPEUI                   - Show current AppEUI"));
+    Serial.println(F("AT+SET_APPKEY=<32 HEX>          - Set AppKey (16 bytes, hex format)"));
+    Serial.println(F("AT+GET_APPKEY                   - Show current AppKey"));
+
     Serial.println(F("--------------------------------\n"));
   }
-  
+
+
   else {
     Serial.println("[CLI] Unknown command.");
   }

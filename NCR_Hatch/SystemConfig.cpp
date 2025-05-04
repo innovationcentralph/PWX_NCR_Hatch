@@ -1,5 +1,5 @@
 #include "SystemConfig.h"
-#include "SensorMonitorTask.h" 
+#include "SensorMonitorTask.h"
 
 uint32_t loraSendInterval = DEFAULT_SEND_INTERVAL_MS;
 uint32_t heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL_MS;
@@ -7,12 +7,15 @@ uint32_t hotAlarmDurationMs = DEFAULT_HOT_TIMEOUT_MS;
 char passkey[9] = DEFAULT_PASSKEY;
 
 void loadConfig() {
-  EEPROM.begin(64);  // allocate space
+  EEPROM.begin(512);  // allocate space
   EEPROM.get(EEPROM_SEND_INTERVAL_ADDR, loraSendInterval);
   EEPROM.get(EEPROM_HEARTBEAT_INTERVAL_ADDR, heartbeatInterval);
   EEPROM.get(EEPROM_PASSKEY_ADDR, passkey);
   EEPROM.get(EEPROM_HOT_TIMEOUT_ADDR, hotAlarmDurationMs);
   loadHotConfig();
+  loadDevEUI();
+  loadAppEUI();
+  loadAppKEY();
 
   if (loraSendInterval < 1000 || loraSendInterval > 60000) {
     loraSendInterval = DEFAULT_SEND_INTERVAL_MS;
@@ -26,10 +29,9 @@ void loadConfig() {
     strncpy(passkey, DEFAULT_PASSKEY, sizeof(passkey));
   }
 
-  if (hotAlarmDurationMs < 1000 || hotAlarmDurationMs > 60000){
+  if (hotAlarmDurationMs < 1000 || hotAlarmDurationMs > 60000) {
     hotAlarmDurationMs = DEFAULT_HOT_TIMEOUT_MS;
   }
-
 }
 
 void saveSendInterval(uint32_t interval) {
@@ -69,4 +71,38 @@ void saveHotTimeout(uint32_t value) {
   hotAlarmDurationMs = value;
   EEPROM.put(EEPROM_HOT_TIMEOUT_ADDR, hotAlarmDurationMs);
   EEPROM.commit();
+}
+
+void saveDevEUI(const uint8_t* newEUI) {
+  for (int i = 0; i < 8; i++) {
+    EEPROM.write(EEPROM_ADDR_DEVEUI + i, newEUI[i]);
+    devEUI[i] = newEUI[i];  // Update global
+  }
+  EEPROM.commit();
+}
+
+void loadDevEUI() {
+  for (int i = 0; i < 8; i++) {
+    devEUI[i] = EEPROM.read(EEPROM_ADDR_DEVEUI + i);
+  }
+}
+
+void saveAppEUI(const uint8_t* newAppEUI) {
+  EEPROM.put(EEPROM_ADDR_APPEUI, *newAppEUI);
+  EEPROM.commit();
+  memcpy(appEUI, newAppEUI, sizeof(appEUI));
+}
+
+void loadAppEUI() {
+  EEPROM.get(EEPROM_ADDR_APPEUI, appEUI);
+}
+
+void saveAppKEY(const uint8_t* newAppKEY) {
+  EEPROM.put(EEPROM_ADDR_APPKEY, *newAppKEY);
+  EEPROM.commit();
+  memcpy(appKEY, newAppKEY, sizeof(appKEY));
+}
+
+void loadAppKEY() {
+  EEPROM.get(EEPROM_ADDR_APPKEY, appKEY);
 }
