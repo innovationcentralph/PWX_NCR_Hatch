@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "lorawan.h"
 
 #define MAX_DCI 6
 
@@ -24,9 +25,19 @@ struct HeartbeatPayload {
   float humidity;
 };
 
+// Payload structure for Passkey Entry
+typedef struct PassKeyPayload
+{
+    PASSKEY_STAT passkeyStat; 
+    PASSKEY_TYPE passkeyType; 
+    uint8_t len;
+    char passk[8];
+};
+
 extern QueueHandle_t theftAlarmQueue;
 extern QueueHandle_t eventsQueue;
 extern QueueHandle_t heartbeatQueue;
+extern QueueHandle_t passKeyQueue;
 
 void createLoRaQueues();
 void createLoRaSenderTask();
@@ -34,3 +45,4 @@ void createLoRaSenderTask();
 void sendTheftAlarmPayload(const TheftAlarmPayload& payload);
 void sendEventsPayload(const EventsPayload& payload);
 void sendHeartbeatPayload(const HeartbeatPayload& payload);
+void sendPasskeyPayload(const PassKeyPayload& payload);

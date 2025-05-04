@@ -6,18 +6,23 @@
 #include "lorawan.h"
 #include <Arduino.h>
 
+extern bool isLoRaReady;
+
 QueueHandle_t theftAlarmQueue;
 QueueHandle_t eventsQueue;
 QueueHandle_t heartbeatQueue;
+QueueHandle_t passKeyQueue;
 
 HeartbeatPayload _heartbeatPayload;
 EventsPayload _eventsPayload;
 TheftAlarmPayload _alarmPayload;
+PassKeyPayload _passkeyPayload;
 
 void createLoRaQueues() {
   theftAlarmQueue = xQueueCreate(5, sizeof(TheftAlarmPayload));
   eventsQueue = xQueueCreate(5, sizeof(EventsPayload));
   heartbeatQueue = xQueueCreate(5, sizeof(HeartbeatPayload));
+  passKeyQueue = xQueueCreate(5, sizeof(PassKeyPayload));
 }
 
 void loraSenderTask(void* pvParameters) {
@@ -28,7 +33,6 @@ void loraSenderTask(void* pvParameters) {
     vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(loraSendInterval));
 
     // Priority 1: Theft Alarm
-
     if (xQueueReceive(theftAlarmQueue, &_alarmPayload, 0) == pdPASS) {
       sendTheftAlarmPayload(_alarmPayload);
 
@@ -42,7 +46,26 @@ void loraSenderTask(void* pvParameters) {
       continue;
     }
 
-    // Priority 2: Events
+    // Priority 2: Passkey
+    if (xQueueReceive(passKeyQueue, &_passkeyPayload, 0) == pdPASS) {
+      sendPasskeyPayload(_passkeyPayload);
+
+      // Print PassKey data
+      Serial.printf("[LoRa] Pass Key Payload: \r\n");
+      Serial.printf("[LoRa] Status: %s\r\n", _passkeyPayload.passkeyStat == CORRECT_PASSKEY ? "CORRECT" : "INCORRECT");
+      Serial.printf("[LoRa] Type: %s\r\n", _passkeyPayload.passkeyType == SILENT ? "SILENT" : "NOT SILENT");
+      Serial.printf("[LoRa] Length: %d\r\n", _passkeyPayload.len);
+
+      Serial.print("[LoRa] PassKey: ");
+      for (uint8_t x = 0; x < _passkeyPayload.len; x++) {
+        Serial.print(_passkeyPayload.passk[x]);
+      }
+      Serial.println();
+
+      continue;
+    }
+
+    // Priority 3: Events
 
     if (xQueueReceive(eventsQueue, &_eventsPayload, 0) == pdPASS) {
       sendEventsPayload(_eventsPayload);
@@ -57,7 +80,7 @@ void loraSenderTask(void* pvParameters) {
       continue;
     }
 
-    // Priority 3: Heartbeat
+    // Priority 4: Heartbeat
 
     if (xQueueReceive(heartbeatQueue, &_heartbeatPayload, 0) == pdPASS) {
       sendHeartbeatPayload(_heartbeatPayload);
@@ -90,9 +113,13 @@ void sendTheftAlarmPayload(const TheftAlarmPayload& payload) {
   alarmPayloadPtr->dryContactStat.dc6 = _alarmPayload.dciStates[5];
 
   if (strcmp(_alarmPayload.alarmType, "Hatch Open") == 0) {
-    processUplink(ALARM_THEFT, CONFIRMED_UPLINK);
+    if (isLoRaReady) {
+      processUplink(ALARM_THEFT, CONFIRMED_UPLINK);
+    }
   } else if (strcmp(_alarmPayload.alarmType, "Silent Alarm Triggered") == 0) {
-    processUplink(SILENT_ALARM, CONFIRMED_UPLINK);
+    if (isLoRaReady) {
+      processUplink(SILENT_ALARM, CONFIRMED_UPLINK);
+    }
   }
 
   Serial.println("[LoRa] Sent Theft Alarm Payload");
@@ -110,10 +137,9 @@ void sendEventsPayload(const EventsPayload& payload) {
   _eventPayloadPtr->dryContactStat.dc4 = _heartbeatPayload.dciStates[3];
   _eventPayloadPtr->dryContactStat.dc5 = _heartbeatPayload.dciStates[4];
   _eventPayloadPtr->dryContactStat.dc6 = _heartbeatPayload.dciStates[5];
-
-  processUplink(EVENTS, CONFIRMED_UPLINK);
-  Serial.println("[LoRa] Sent Heartbeat Payload");
-
+  if (isLoRaReady) {
+    processUplink(EVENTS, CONFIRMED_UPLINK);
+  }
   Serial.println("[LoRa] Sent Events Payload");
 }
 
@@ -131,9 +157,31 @@ void sendHeartbeatPayload(const HeartbeatPayload& payload) {
   _hbPayloadPtr->dryContactStat.dc5 = _heartbeatPayload.dciStates[4];
   _hbPayloadPtr->dryContactStat.dc6 = _heartbeatPayload.dciStates[5];
 
-  processUplink(HEARTBEAT, UNCONFIRMED_UPLINK);
+  if (isLoRaReady) {
+    processUplink(HEARTBEAT, UNCONFIRMED_UPLINK);
+  }
   Serial.println("[LoRa] Sent Heartbeat Payload");
 }
+
+void sendPasskeyPayload(const PassKeyPayload& payload) {
+
+  keysPayload_s* _keysPayloadPtr;
+  _keysPayloadPtr = keysPayloadInstance();
+
+  _keysPayloadPtr->passkeyStat = _passkeyPayload.passkeyStat;
+  _keysPayloadPtr->passkeyType = _passkeyPayload.passkeyType;
+  _keysPayloadPtr->len         = _passkeyPayload.len;
+
+  memcpy(_keysPayloadPtr->passk, payload.passk, payload.len);
+
+  if (isLoRaReady) {
+    processUplink(KEYS, UNCONFIRMED_UPLINK);
+  }
+  Serial.println("[LoRa] Sent PassKey Payload");
+  
+}
+
+
 
 void createLoRaSenderTask() {
   createLoRaQueues();
@@ -146,3 +194,5 @@ void createLoRaSenderTask() {
     NULL,
     1);
 }
+
+

@@ -67,6 +67,7 @@ void processSendConfirmed(void);
 
 /* Register callback  */
 void registerSendConfirmedCallback(void (*callback)(void));
+void registerOkCallback(void (*callback)(void));
 
 
 #endif
