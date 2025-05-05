@@ -110,7 +110,8 @@ void loraRxTask(void * parameters)
                     case DL_TX_INTERVAL_ID: {  
                       Serial.println("DL LoRa TX Interval");
                       String cmd = "AT+SET_LORA_INTERVAL=";
-                      uint16_t txInt = (uint16_t)((numData[1] << 8) | numData[2]);
+                      //  uint16_t txInt = (uint16_t)((numData[1] << 8) | numData[2]);
+                      uint32_t txInt = ((uint32_t)((numData[1] << 8) | numData[2]))*1000;
                       Serial.print("Tx Interval: ");
                       cmd += (String)txInt; 
                       Serial.println(cmd);
@@ -135,8 +136,8 @@ void loraRxTask(void * parameters)
                     case DL_HEARTBEAT_INTERVAL_ID: {
                       Serial.print("DL Heartbeat Interval");
                       String cmd = "AT+SET_HEARTBEAT_INTERVAL=";
-                      uint16_t hbInt = (uint16_t)((numData[1] << 8) | numData[2]);
-                      
+                      // uint16_t hbInt = (uint16_t)((numData[1] << 8) | numData[2]);
+                      uint32_t hbInt = ((uint32_t)((numData[1] << 8) | numData[2]))*1000;
                       cmd += (String)hbInt; 
                       Serial.println(cmd);
                       handleCLICommand(cmd); 
@@ -159,7 +160,8 @@ void loraRxTask(void * parameters)
                     case  DL_HOT_TIMEOUT_ID: {
                       Serial.println("DL Hot Timeout");
                       String cmd = "AT+SET_HOT_TIMEOUT=";
-                      uint16_t hotTimeout = (uint16_t)((numData[1] << 8) | numData[2]);
+                      // uint16_t hotTimeout = (uint16_t)((numData[1] << 8) | numData[2]);
+                      uint32_t hotTimeout = ((uint32_t)((numData[1] << 8) | numData[2]))*1000;
                       
                       cmd += (String)hotTimeout; 
                       Serial.println(cmd);
