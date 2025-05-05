@@ -13,9 +13,10 @@ void loadConfig() {
   EEPROM.get(EEPROM_PASSKEY_ADDR, passkey);
   EEPROM.get(EEPROM_HOT_TIMEOUT_ADDR, hotAlarmDurationMs);
   loadHotConfig();
-  loadDevEUI();
-  loadAppEUI();
-  loadAppKEY();
+  /* Comment out for testing */
+  // loadDevEUI();
+  // loadAppEUI();
+  // loadAppKEY();
 
   if (loraSendInterval < 1000 || loraSendInterval > 60000) {
     loraSendInterval = DEFAULT_SEND_INTERVAL_MS;

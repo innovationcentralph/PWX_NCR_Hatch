@@ -21,6 +21,18 @@ diagnosticPayload_s * diagnosticPayloadPtr;
 eventsPayload_s * eventPayloadPtr; 
 alarmPayload_s * alarmPayloadPtr; 
 keysPayload_s * keysPayloadPtr;
+volatile bool loraJoinStatus = false; 
+
+bool getLoraJoinStatus(void)
+{
+  bool status =  loraJoinStatus; 
+  return status;
+}
+
+void setLoraJoinStatus(bool stat)
+{
+  loraJoinStatus = stat;
+}
 /* Utility */
 void stringToHex(char * strBuffer, uint8_t * hexBuffer )
 {
@@ -36,174 +48,177 @@ void stringToHex(char * strBuffer, uint8_t * hexBuffer )
 
 void loraRxTask(void * parameters)
 { 
+
   while(1)
   {
-    if (lorawanSerial.available()) {
-      unsigned long startTime = millis(); 
-      String reply;
-      while ((millis() - startTime) < 100) { // timeout 
-        reply = lorawanSerial.readStringUntil('\n');
+    if(getLoraJoinStatus())
+    {
+      if (lorawanSerial.available()) {
+        unsigned long startTime = millis(); 
+        String reply;
+        while ((millis() - startTime) < 100) { // timeout 
+          reply = lorawanSerial.readStringUntil('\n');
 
-        if (strstr(reply.c_str(), "+EVT:SEND_CONFIRMED") != NULL) { 
-          Serial.println("ACK");
-          /* Todo: Uncomment and complete Callback function Here*/
-          processSendConfirmed();
-        } else if (strstr(reply.c_str(), "+EVT:") != NULL) {
-            int port, size;
-            char payload[35];
+          if (strstr(reply.c_str(), "+EVT:SEND_CONFIRMED") != NULL) { 
+            Serial.println("ACK");
+            /* Todo: Uncomment and complete Callback function Here*/
+            processSendConfirmed();
+          } else if (strstr(reply.c_str(), "+EVT:") != NULL) {
+              int port, size;
+              char payload[35];
 
-            // Step 2: Try to parse the pattern "+EVT:<port>:<code>:<hex>"
-            if (sscanf(reply.c_str(), "+EVT:%d:%x:%34s", &port, &size, payload) == 3) {
-              char printBuffer[MAX_BUFFER_SIZE];
-              int len = strlen(payload);
-              char charPayload[len];
-              strcpy(charPayload, payload); 
-              uint8_t numData[len/2]; 
-              stringToHex(charPayload, numData);
+              // Step 2: Try to parse the pattern "+EVT:<port>:<code>:<hex>"
+              if (sscanf(reply.c_str(), "+EVT:%d:%x:%34s", &port, &size, payload) == 3) {
+                char printBuffer[MAX_BUFFER_SIZE];
+                int len = strlen(payload);
+                char charPayload[len];
+                strcpy(charPayload, payload); 
+                uint8_t numData[len/2]; 
+                stringToHex(charPayload, numData);
 
-              if(port == 5)
-              {
-                switch(numData[0])
-                { 
-                  case DL_APPEUI_ID: {
-                    uint8_t appEUI[8];
-                    memcpy(appEUI, &numData[1], 8 * sizeof(uint8_t));
-                    sprintf(printBuffer,"APPEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
-                    appEUI[0], appEUI[1], appEUI[2], appEUI[3], appEUI[4], appEUI[5], appEUI[6], appEUI[7] );
-                    Serial.print(printBuffer);
-                  }
-                  break; 
-                  
-                  case DL_DEVEUI_ID: {
-                    uint8_t devEUI[8];
-                    memcpy(devEUI, &numData[1], 8 * sizeof(uint8_t));
-                    sprintf(printBuffer,"DEVEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
-                    devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
-                    Serial.print(printBuffer);
-                  }
-                  break; 
-                  
-                  case DL_APPKEY_ID: 
-                    uint8_t appKEY[16];
-                    memcpy(appKEY, &numData[1], 16 * sizeof(uint8_t));
-                    sprintf(printBuffer,"APPKEY=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
-                    appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
-                    appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
-                    Serial.print(printBuffer);
-
-                  break; 
-                  case DL_TX_INTERVAL_ID: {  
-                    Serial.println("DL LoRa TX Interval");
-                    String cmd = "AT+SET_LORA_INTERVAL=";
-                    uint16_t txInt = (uint16_t)((numData[1] << 8) | numData[2]);
-                    Serial.print("Tx Interval: ");
-                    cmd += (String)txInt; 
-                    Serial.println(cmd);
-                    handleCLICommand(cmd); 
-                  } 
-                  break;
-                 
-                  
-                  case DL_RESET_ID: 
-                    Serial.print("Reset");
-                    lorawanSerial.print("ATZ\r");
-                    vTaskDelay(pdMS_TO_TICKS(10));
-                    ESP.restart();
-
-                  break; 
-
-                  case DL_HOT_DC_ID: 
-                    Serial.print("Hot DC: ");
-                    Serial.println(numData[1]);
-    
-                  break; 
-                  case DL_HEARTBEAT_INTERVAL_ID: {
-                    Serial.print("DL Heartbeat Interval");
-                    String cmd = "AT+SET_HEARTBEAT_INTERVAL=";
-                    uint16_t hbInt = (uint16_t)((numData[1] << 8) | numData[2]);
-                    
-                    cmd += (String)hbInt; 
-                    Serial.println(cmd);
-                    handleCLICommand(cmd); 
-                  }
-                  break; 
-                  
-                  case  DL_DC_STATES_ID: {
-                    Serial.println("DL DC States ");
-                    String cmd = "AT+SET_HOT=";
-                    for(int i = 0; i < 6; i++ )
-                    {
-                      cmd += ((numData[1] >> i) & 0x01) ? '1' : '0';
-                      if(i < 5) cmd += ',';
+                if(port == 5)
+                {
+                  switch(numData[0])
+                  { 
+                    case DL_APPEUI_ID: {
+                      uint8_t appEUI[8];
+                      memcpy(appEUI, &numData[1], 8 * sizeof(uint8_t));
+                      sprintf(printBuffer,"APPEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+                      appEUI[0], appEUI[1], appEUI[2], appEUI[3], appEUI[4], appEUI[5], appEUI[6], appEUI[7] );
+                      Serial.print(printBuffer);
                     }
-                    Serial.println(cmd);
-                    handleCLICommand(cmd); 
-                  }
-                  break; 
-                  
-                   case  DL_HOT_TIMEOUT_ID: {
-                    Serial.println("DL Hot Timeout");
-                    String cmd = "AT+SET_HOT_TIMEOUT=";
-                    uint16_t hotTimeout = (uint16_t)((numData[1] << 8) | numData[2]);
+                    break; 
                     
-                    cmd += (String)hotTimeout; 
-                    Serial.println(cmd);
-                    handleCLICommand(cmd); 
-                  }
-                  break; 
-                  
-                  case DL_PASSKEY_ID: {
-                    Serial.println("DL Passkey");
-                    String cmd = "AT+SET_PASSKEY="; 
-                    for(int i = 0; i < (len/2)-1; i ++ )
-                    {
-                      Serial.print((char)numData[i+1]);
-                      cmd += (char)numData[i+1];
+                    case DL_DEVEUI_ID: {
+                      uint8_t devEUI[8];
+                      memcpy(devEUI, &numData[1], 8 * sizeof(uint8_t));
+                      sprintf(printBuffer,"DEVEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+                      devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
+                      Serial.print(printBuffer);
                     }
-                    Serial.println(" ");
-                    Serial.println(cmd);// for debug only 
-                    handleCLICommand(cmd); 
+                    break; 
+                    
+                    case DL_APPKEY_ID: 
+                      uint8_t appKEY[16];
+                      memcpy(appKEY, &numData[1], 16 * sizeof(uint8_t));
+                      sprintf(printBuffer,"APPKEY=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+                      appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
+                      appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
+                      Serial.print(printBuffer);
+
+                    break; 
+                    case DL_TX_INTERVAL_ID: {  
+                      Serial.println("DL LoRa TX Interval");
+                      String cmd = "AT+SET_LORA_INTERVAL=";
+                      uint16_t txInt = (uint16_t)((numData[1] << 8) | numData[2]);
+                      Serial.print("Tx Interval: ");
+                      cmd += (String)txInt; 
+                      Serial.println(cmd);
+                      handleCLICommand(cmd); 
+                    } 
+                    break;
+                  
+                    
+                    case DL_RESET_ID: 
+                      Serial.print("Reset");
+                      lorawanSerial.print("ATZ\r");
+                      vTaskDelay(pdMS_TO_TICKS(10));
+                      ESP.restart();
+
+                    break; 
+
+                    case DL_HOT_DC_ID: 
+                      Serial.print("Hot DC: ");
+                      Serial.println(numData[1]);
+      
+                    break; 
+                    case DL_HEARTBEAT_INTERVAL_ID: {
+                      Serial.print("DL Heartbeat Interval");
+                      String cmd = "AT+SET_HEARTBEAT_INTERVAL=";
+                      uint16_t hbInt = (uint16_t)((numData[1] << 8) | numData[2]);
+                      
+                      cmd += (String)hbInt; 
+                      Serial.println(cmd);
+                      handleCLICommand(cmd); 
+                    }
+                    break; 
+                    
+                    case  DL_DC_STATES_ID: {
+                      Serial.println("DL DC States ");
+                      String cmd = "AT+SET_HOT=";
+                      for(int i = 0; i < 6; i++ )
+                      {
+                        cmd += ((numData[1] >> i) & 0x01) ? '1' : '0';
+                        if(i < 5) cmd += ',';
+                      }
+                      Serial.println(cmd);
+                      handleCLICommand(cmd); 
+                    }
+                    break; 
+                    
+                    case  DL_HOT_TIMEOUT_ID: {
+                      Serial.println("DL Hot Timeout");
+                      String cmd = "AT+SET_HOT_TIMEOUT=";
+                      uint16_t hotTimeout = (uint16_t)((numData[1] << 8) | numData[2]);
+                      
+                      cmd += (String)hotTimeout; 
+                      Serial.println(cmd);
+                      handleCLICommand(cmd); 
+                    }
+                    break; 
+                    
+                    case DL_PASSKEY_ID: {
+                      Serial.println("DL Passkey");
+                      String cmd = "AT+SET_PASSKEY="; 
+                      for(int i = 0; i < (len/2)-1; i ++ )
+                      {
+                        Serial.print((char)numData[i+1]);
+                        cmd += (char)numData[i+1];
+                      }
+                      Serial.println(" ");
+                      Serial.println(cmd);// for debug only 
+                      handleCLICommand(cmd); 
+                    }
+                    break; 
+                    
+                    
+                    case DL_KEY_UPDATE_ENABLE_ID: 
+                      Serial.print("Update credentials enable");
+      
+                    break; 
+
+                    case DL_KEY_UPDATE_DISABLE_ID: 
+                      Serial.print("Update credentials disable");
+
+                    break; 
+
+                    case DL_SAVE_SETTINGS_ID: 
+                      Serial.print("Saving Settings");
+          
+                    break; 
+                    default: 
+                    break; 
                   }
-                  break; 
-                  
-                  
-                  case DL_KEY_UPDATE_ENABLE_ID: 
-                    Serial.print("Update credentials enable");
-    
-                  break; 
-
-                  case DL_KEY_UPDATE_DISABLE_ID: 
-                    Serial.print("Update credentials disable");
-
-                  break; 
-
-                  case DL_SAVE_SETTINGS_ID: 
-                    Serial.print("Saving Settings");
-        
-                  break; 
-                  default: 
-                  break; 
                 }
               }
-            }
-        } else {
-            // Serial.println("+EVT line not found.\n");
-        }
+          } else {
+              // Serial.println("+EVT line not found.\n");
+          }
 
-        if (strstr(reply.c_str(), "OK") != NULL) { 
-          Serial.println("OK");
-          processOK();
+          if (strstr(reply.c_str(), "OK") != NULL) { 
+            Serial.println("OK");
+            processOK();
+          }
+          #ifdef ECHO_RX_REPLY
+          Serial.println(reply); // Echo the received reply
+          #endif
         }
-        #ifdef ECHO_RX_REPLY
-        Serial.println(reply); // Echo the received reply
-        #endif
       }
-
-      
-      
+       
     }
     vTaskDelay(10 / portTICK_PERIOD_MS); // Shorter delay for faster response
   }
+ 
 }
 
 void loraTxTask(void * parameters)

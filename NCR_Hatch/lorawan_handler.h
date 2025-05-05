@@ -8,6 +8,7 @@
 
 #define DEVICE_CONFIG_PORT        5
 
+
 typedef enum
 {
   DL_APPEUI_ID = 1,
@@ -56,6 +57,9 @@ void initLoraSerial(void);
 int switchClass(void);
 
 int checkResponse (char * buffer, ERROR_MSGS errMsg);
+
+bool getLoraJoinStatus(void);
+void setLoraJoinStatus(bool stat);
 
 /* Function pointers */
 static void (*okCallback)(void) = NULL;
