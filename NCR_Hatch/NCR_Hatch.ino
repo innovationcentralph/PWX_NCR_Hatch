@@ -33,7 +33,6 @@ void loraInitTask(void* pvParameters) {
       vTaskDelay(pdMS_TO_TICKS(5000));
     }
   }
-
   vTaskDelete(NULL);  // Self-delete task when done
 }
 
