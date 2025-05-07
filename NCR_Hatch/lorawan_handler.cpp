@@ -207,7 +207,18 @@ void loraRxTask(void * parameters)
                       handleCLICommand(cmd); 
                     }
                     break; 
-                    
+                    case  DL_SET_DCI_EDGE: {
+                      Serial.println("DL DC Edge States ");
+                      String cmd = "AT+SET_DCI_EDGE=";
+                      for(int i = 0; i < 6; i++ )
+                      {
+                        cmd += ((numData[1] >> i) & 0x01) ? '1' : '0';
+                        if(i < 5) cmd += ',';
+                      }
+                      Serial.println(cmd);
+                      handleCLICommand(cmd); 
+                    }
+                    break; 
                     
                     case DL_KEY_UPDATE_ENABLE_ID: 
                       Serial.print("Update credentials enable");
