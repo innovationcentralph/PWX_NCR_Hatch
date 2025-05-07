@@ -9,17 +9,11 @@
 #include "lorawan_handler.h"
 
 /* Fixed Credentials */
-uint8_t appEUI[8]= {0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10}; 
-<<<<<<< Updated upstream
-uint8_t devEUI[8]= {0x10,0x10,0x10,0x10,0x01,0xF9,0x42,0x1B}; 
-uint8_t appKEY[16]= {0x8A,0xD7,0x3D,0x3D,0x3B,0x47,0xD4,0x3E,0xF5,0xB2,0xF8,0x25,0x26,0xAA,0xFB,0x50}; 
-uint8_t devADDR[4]= {0xE0, 0x24, 0x4F, 0x52};
-=======
-                 
-uint8_t devEUI[8]= {0x10,0x10,0x10,0x10,0x08,0xB1,0x2D,0x16}; 
-uint8_t appKEY[16]= {0x8A,0xD7,0x3D,0x3D,0x3B,0x47,0xD4,0x3E,0xF5,0xB2,0xF8,0x25,0x26,0xAA,0xB1,0x11}; 
-uint8_t devADDR[4]= {0xE0, 0x24, 0xA2, 0x95};
->>>>>>> Stashed changes
+// uint8_t appEUI[8] = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 };
+// uint8_t devEUI[8] = { 0x10, 0x10, 0x10, 0x10, 0x01, 0xF9, 0x42, 0x1B };
+// uint8_t appKEY[16] = { 0x8A, 0xD7, 0x3D, 0x3D, 0x3B, 0x47, 0xD4, 0x3E, 0xF5, 0xB2, 0xF8, 0x25, 0x26, 0xAA, 0xFB, 0x50 };
+// uint8_t devADDR[4] = { 0xE0, 0x24, 0x4F, 0x52 };
+
 
 bool isLoRaReady = false;  // Set true after LoRa is initialized
 
@@ -32,7 +26,7 @@ void loraInitTask(void* pvParameters) {
     err = initLora(appEUI, devEUI, appKEY, devADDR);
     if (err == 0) {
       isLoRaReady = true;
-      setLoraJoinStatus(isLoRaReady); // added to start processing Rx Handler 
+      setLoraJoinStatus(isLoRaReady);  // added to start processing Rx Handler
       Serial.println("[LoRa] Initialization complete.");
     } else {
       Serial.println("[LoRa] Init failed, retrying in 5 seconds...");
@@ -57,11 +51,11 @@ void setup() {
   digitalWrite(DCO_1, RELAY_OFF);
 
   // Load config before sensor/tasks
-  loadConfig();  // Includes intervals, passkey, HOT config, 
+  loadConfig();  // Includes intervals, passkey, HOT config,
 
   // Start non-blocking LoRa initialization
-  
-  initLoraSerial(); // moved it outside the loraInitTask to stop reinitializing the serial port
+
+  initLoraSerial();  // moved it outside the loraInitTask to stop reinitializing the serial port
   xTaskCreatePinnedToCore(
     loraInitTask,
     "LoRaInitTask",
@@ -69,8 +63,7 @@ void setup() {
     NULL,
     5,
     NULL,
-    1
-  );
+    1);
 
   createLoRaQueues();
   createSensorTasks();
@@ -81,12 +74,19 @@ void setup() {
   xTaskCreatePinnedToCore(
     loraRxTask,
     "LoRa RX Task",
-    4096, // changed for testing. 
+    4096,  // changed for testing.
     NULL,
     7,
     NULL,
-    1
-  );
+    1);
+  xTaskCreatePinnedToCore(
+    loraTxTask,
+    "LoRa TX Task",
+    4096,  // changed for testing.
+    NULL,
+    7,
+    NULL,
+    1);
 
   Serial.println("System Initialized");
 }
