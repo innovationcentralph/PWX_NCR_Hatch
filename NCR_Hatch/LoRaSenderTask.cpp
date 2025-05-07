@@ -76,6 +76,7 @@ void loraSenderTask(void* pvParameters) {
         Serial.printf("  DCI_%d: %s\n", i + 1, _eventsPayload.dciStates[i] ? "HIGH" : "LOW");
       }
       Serial.printf("  Temperature: %.2f °C\n", _eventsPayload.temperature);
+      Serial.printf("     Humidity: %.2f RH\n", _eventsPayload.humidity);
 
       continue;
     }
@@ -129,14 +130,14 @@ void sendEventsPayload(const EventsPayload& payload) {
 
   eventsPayload_s* _eventPayloadPtr;
   _eventPayloadPtr = getEventsPayloadInstance();
-  _eventPayloadPtr->temperature.all = (uint16_t)(_heartbeatPayload.temperature * 10);
-  _eventPayloadPtr->humidity.all = (uint16_t)(_heartbeatPayload.humidity * 10);
-  _eventPayloadPtr->dryContactStat.dc1 = _heartbeatPayload.dciStates[0];
-  _eventPayloadPtr->dryContactStat.dc2 = _heartbeatPayload.dciStates[1];
-  _eventPayloadPtr->dryContactStat.dc3 = _heartbeatPayload.dciStates[2];
-  _eventPayloadPtr->dryContactStat.dc4 = _heartbeatPayload.dciStates[3];
-  _eventPayloadPtr->dryContactStat.dc5 = _heartbeatPayload.dciStates[4];
-  _eventPayloadPtr->dryContactStat.dc6 = _heartbeatPayload.dciStates[5];
+  _eventPayloadPtr->temperature.all = (uint16_t)(_eventsPayload.temperature * 10);
+  _eventPayloadPtr->humidity.all = (uint16_t)(_eventsPayload.humidity * 10);
+  _eventPayloadPtr->dryContactStat.dc1 = _eventsPayload.dciStates[0];
+  _eventPayloadPtr->dryContactStat.dc2 = _eventsPayload.dciStates[1];
+  _eventPayloadPtr->dryContactStat.dc3 = _eventsPayload.dciStates[2];
+  _eventPayloadPtr->dryContactStat.dc4 = _eventsPayload.dciStates[3];
+  _eventPayloadPtr->dryContactStat.dc5 = _eventsPayload.dciStates[4];
+  _eventPayloadPtr->dryContactStat.dc6 = _eventsPayload.dciStates[5];
   if (isLoRaReady) {
     processUplink(EVENTS, CONFIRMED_UPLINK);
   }

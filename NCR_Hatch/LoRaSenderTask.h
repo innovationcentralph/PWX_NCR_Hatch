@@ -16,6 +16,7 @@ struct TheftAlarmPayload {
 struct EventsPayload {
   bool dciStates[MAX_DCI];
   float temperature;
+  float humidity;
 };
 
 // Payload structure for Heartbeat
