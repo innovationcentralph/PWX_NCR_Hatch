@@ -61,6 +61,7 @@ void monitorDryContactsTask(void *pvParameters) {
     dryContacts[i].state = digitalRead(dryContacts[i].pin);
     lastReadState[i] = dryContacts[i].state;
     lastDebounceTime[i] = millis();
+    currentSensorReadings.dciStates[i] = dryContacts[i].state;
   }
 
   while (1) {
@@ -74,44 +75,56 @@ void monitorDryContactsTask(void *pvParameters) {
 
       if ((millis() - lastDebounceTime[i]) > debounceDelay) {
         if (currentState != dryContacts[i].state) {
+          bool prevState = dryContacts[i].state;
           dryContacts[i].state = currentState;
+
+          // Update shared readings first before any snapshot
+          currentSensorReadings.dciStates[i] = currentState;
+
+          bool isRisingEdge = (prevState == LOW && currentState == HIGH);
+          bool isFallingEdge = (prevState == HIGH && currentState == LOW);
 
           bool hotTriggered = false;
 
-
-          if (dryContacts[i].isHot && ((dryContacts[i].triggerOnHigh && currentState == HIGH) || (!dryContacts[i].triggerOnHigh && currentState == LOW))) {
-            if (!xTimerIsTimerActive(hotAlarmTimer)) {
-              xTimerStart(hotAlarmTimer, 0);
-              Serial.printf("[HOT] Timer started by DCI_%d\n", i + 1);
+          if (dryContacts[i].isHot) {
+            if ((dryContacts[i].triggerOnHigh && isRisingEdge) ||
+                (!dryContacts[i].triggerOnHigh && isFallingEdge)) {
+              if (!xTimerIsTimerActive(hotAlarmTimer)) {
+                xTimerStart(hotAlarmTimer, 0);
+                Serial.printf("[HOT] Timer started by DCI_%d\n", i + 1);
+              }
+              Serial.printf("[HOT] Channel DCI_%d Triggered\n", i + 1);
+              hotTriggered = true;
             }
-            Serial.printf("[HOT] Channel DCI_%d Opened\n", i + 1);
-            hotTriggered = true;
-          } else {
-            Serial.printf("DCI_%d changed to %s\n", i + 1, currentState == HIGH ? "HIGH" : "LOW");
           }
 
-          // Enqueue to Events Queue only if not HOT
-          if (!hotTriggered) {
-            EventsPayload evt;
-            SensorReadings snapshot = getSensorReadings();
-            memcpy(evt.dciStates, snapshot.dciStates, sizeof(evt.dciStates));
-            evt.temperature = snapshot.temperature;
+          // Log DCI edge regardless of HOT trigger
+          Serial.printf("[Event] DCI_%d %s (Trigger on %s)\n",
+                        i + 1,
+                        currentState == HIGH ? "HIGH" : "LOW",
+                        dryContacts[i].triggerOnHigh ? "High" : "Low");
 
-            if (xQueueSend(eventsQueue, &evt, 0) == pdPASS) {
-              Serial.println("[Event] Enqueued due to DCI change");
-            } else {
-              Serial.println("[Event] Queue Full - event not sent");
-            }
+          // Enqueue to Events Queue for all edges
+          EventsPayload evt;
+          SensorReadings snapshot = getSensorReadings();  // now includes updated DCI states
+          memcpy(evt.dciStates, snapshot.dciStates, sizeof(evt.dciStates));
+          evt.temperature = snapshot.temperature;
+          evt.humidity = snapshot.humidity;
+
+          if (xQueueSend(eventsQueue, &evt, 0) == pdPASS) {
+            Serial.println("[Event] Enqueued due to DCI edge");
+          } else {
+            Serial.println("[Event] Queue Full - event not sent");
           }
         }
       }
-
-      // Update shared readings
-      currentSensorReadings.dciStates[i] = dryContacts[i].state;
     }
+
     vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
+
+
 
 void monitorSHTSensorTask(void *pvParameters) {
 
