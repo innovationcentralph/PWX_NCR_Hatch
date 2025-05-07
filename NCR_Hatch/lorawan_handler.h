@@ -7,7 +7,7 @@
 #define MAX_BUFFER_SIZE 150
 
 #define DEVICE_CONFIG_PORT        5
-
+#define JOIN_INTERVAL             15000
 
 typedef enum
 {

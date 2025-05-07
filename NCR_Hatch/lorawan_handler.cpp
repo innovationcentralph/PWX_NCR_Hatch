@@ -308,7 +308,7 @@ void loraTxTask(void * parameters)
         lorawanSerial.print("AT+JOIN=1\r");
         vTaskDelay(pdMS_TO_TICKS(10));
         String c;
-        while ((millis() - startTime) < 10000) {
+        while ((millis() - startTime) < JOIN_INTERVAL) {
             while (lorawanSerial.available()) {
                 c = lorawanSerial.readStringUntil('\n');
                 if(strstr(c.c_str(), "+EVT:JOINED") != NULL)
@@ -477,7 +477,7 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
     lorawanSerial.print("AT+JOIN=1\r");
     vTaskDelay(pdMS_TO_TICKS(10));
     String c;
-    while ((millis() - startTime) < 10000) {
+    while ((millis() - startTime) < JOIN_INTERVAL) {
         while (lorawanSerial.available()) {
             c = lorawanSerial.readStringUntil('\n');
             if(strstr(c.c_str(), "+EVT:JOINED") != NULL)
