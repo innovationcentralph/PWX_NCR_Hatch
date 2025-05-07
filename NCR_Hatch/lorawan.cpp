@@ -132,6 +132,7 @@ int loraTransmit(uint8_t * tx_buffer, uint8_t len, int port,UPLINK_TYPE uplinkTy
   snprintf(loraBuffer, MAX_LORA_BUFFER_SIZE, "AT+SEND=%d:%d:%s\r\n", port, uplinkType, hexString);
   
   serial_tx(loraBuffer); 
+
 //   free(loraBuffer);
 //   free(hexString);
   return 0; 

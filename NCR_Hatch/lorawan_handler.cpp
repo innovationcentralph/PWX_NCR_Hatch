@@ -7,12 +7,17 @@
 #include "lorawan.h"
 #include "lorawan_handler.h"
 #include "CLITask.h"
+
+#define NEXT_CHECK_LINK_AFTER 200
+#define NUM_OF_LINK_CHECK 3
 /* Variables */
 /* LoRaWAN Credentials*/
 
 uint16_t txInterval = 60000; 
 
 HardwareSerial lorawanSerial(2);
+
+
 
 
 int err= 0, count = 0; 
@@ -23,6 +28,13 @@ alarmPayload_s * alarmPayloadPtr;
 keysPayload_s * keysPayloadPtr;
 volatile bool loraJoinStatus = false; 
 
+/**/
+bool isCheckingLink=false; 
+uint8_t nextCheckLinkCounter=0; 
+uint8_t successfulLinkCheck=0; 
+uint8_t sentCheckLinkReq=0; 
+uint8_t linkCheckDelayCounter=0; 
+bool rejoin = false; 
 bool getLoraJoinStatus(void)
 {
   bool status =  loraJoinStatus; 
@@ -33,6 +45,8 @@ void setLoraJoinStatus(bool stat)
 {
   loraJoinStatus = stat;
 }
+
+
 /* Utility */
 void stringToHex(char * strBuffer, uint8_t * hexBuffer )
 {
@@ -56,11 +70,22 @@ void loraRxTask(void * parameters)
       if (lorawanSerial.available()) {
         unsigned long startTime = millis(); 
         String reply;
+        
         while ((millis() - startTime) < 100) { // timeout 
           reply = lorawanSerial.readStringUntil('\n');
-
+          // Serial.println(reply);
+          if (strstr(reply.c_str(), "AT_NO_NET_JOINED") != NULL) { 
+            Serial.println("============= NOT Connected to LoRaWAN Network =============");
+            /* Todo: Uncomment and complete Callback function Here*/
+            
+          }
           if (strstr(reply.c_str(), "+EVT:SEND_CONFIRMED") != NULL) { 
             Serial.println("ACK");
+
+            if(isCheckingLink)
+            {
+              successfulLinkCheck++;
+            }
             /* Todo: Uncomment and complete Callback function Here*/
             processSendConfirmed();
           } else if (strstr(reply.c_str(), "+EVT:") != NULL) {
@@ -210,6 +235,7 @@ void loraRxTask(void * parameters)
           if (strstr(reply.c_str(), "OK") != NULL) { 
             Serial.println("OK");
             processOK();
+            vTaskDelay(10 / portTICK_PERIOD_MS);
           }
           #ifdef ECHO_RX_REPLY
           Serial.println(reply); // Echo the received reply
@@ -226,30 +252,69 @@ void loraRxTask(void * parameters)
 void loraTxTask(void * parameters)
 { 
   /* KEYS Payload Test Code */
-  keysPayloadPtr = keysPayloadInstance();  
   TickType_t lastWakeTime = xTaskGetTickCount();
   while(1)
   {
-    int err;
 
-    keysPayloadPtr->passkeyStat = CORRECT_PASSKEY;
-    keysPayloadPtr->passkeyType = SILENT;
-    keysPayloadPtr->len = 6;
-    keysPayloadPtr->passk[0] = '1';
-    keysPayloadPtr->passk[1] = '2';
-    keysPayloadPtr->passk[2] = '3';
-    keysPayloadPtr->passk[3] = '4';
-    keysPayloadPtr->passk[4] = '5';
-    keysPayloadPtr->passk[5] = '6';
-    err = processUplink(KEYS,  CONFIRMED_UPLINK);
-    if(err) 
+    if(getLoraJoinStatus() && !rejoin) // checking connection
     {
-      Serial.println("Sending Error");
+      if ( isCheckingLink) {
+          linkCheckDelayCounter++;
+          if (linkCheckDelayCounter >= 10) { // ~10 seconds
+              checkLinkc(); 
+              sentCheckLinkReq++;
+              linkCheckDelayCounter = 0;
+          }
+          if (sentCheckLinkReq >= NUM_OF_LINK_CHECK) {
+              if (successfulLinkCheck == 0) {
+                  Serial.println("[LoRa] Device is disconnected, need to rejoin");
+                  setLoraJoinStatus(false);
+                  rejoin = true; 
+              } else {
+                  Serial.println("[LoRa] Connection is Good");
+              }
+              isCheckingLink = false;
+              successfulLinkCheck = 0;
+              sentCheckLinkReq = 0;
+              nextCheckLinkCounter = 0;
+          }
+      } else {
+          nextCheckLinkCounter++;
+          if(nextCheckLinkCounter >= NEXT_CHECK_LINK_AFTER) {
+              isCheckingLink = true; 
+          }
+      }
+    }else if(!getLoraJoinStatus() && rejoin)// rejoining
+    {
+      bool isJoined = false;
+      Serial.println("[LoRa] Rejoining");
+      while(!isJoined)
+      {
+        int i = 0; 
+        unsigned long startTime; 
+        startTime = millis();
+
+        lorawanSerial.print("AT+JOIN=1\r");
+        vTaskDelay(pdMS_TO_TICKS(10));
+        String c;
+        while ((millis() - startTime) < 10000) {
+            while (lorawanSerial.available()) {
+                c = lorawanSerial.readStringUntil('\n');
+                if(strstr(c.c_str(), "+EVT:JOINED") != NULL)
+                { 
+                  isJoined = true;
+                }
+                Serial.println(c); 
+            }
+            vTaskDelay(pdMS_TO_TICKS(10)); 
+        }
+    
+        vTaskDelay(pdMS_TO_TICKS(5000));
+      }
+       setLoraJoinStatus(true);
+        rejoin = false;
     }
-    else {
-      Serial.println("Sending Done");
-    }
-    vTaskDelayUntil(&lastWakeTime, 10000 / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&lastWakeTime, 1000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -441,6 +506,15 @@ int switchClass(void)
   Serial.print("Initial transmission done \n\r"); 
 
   vTaskDelay(pdMS_TO_TICKS(5000));
+  return 0;
+}
+
+
+int checkLinkc(void)
+{
+  vTaskDelay(pdMS_TO_TICKS(10));
+   lorawanSerial.print("AT+SEND=10:1:A7\r\n");
+  vTaskDelay(pdMS_TO_TICKS(10));
   return 0;
 }
 
