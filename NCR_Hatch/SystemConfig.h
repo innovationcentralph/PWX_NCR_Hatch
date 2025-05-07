@@ -26,7 +26,8 @@
 #define EEPROM_HEARTBEAT_INTERVAL_ADDR 4 
 #define EEPROM_PASSKEY_ADDR            8
 #define EEPROM_HOT_FLAGS_ADDR          20  
-#define EEPROM_HOT_TIMEOUT_ADDR        24 
+#define EEPROM_HOT_TIMEOUT_ADDR        28 
+#define EEPROM_TRIGGER_EDGE_ADDR       40
 
 
 #define EEPROM_ADDR_DEVEUI   100        // 8 bytes
@@ -63,3 +64,6 @@ void saveAppEUI(const uint8_t* newAppEUI);
 void loadAppEUI();
 void saveAppKEY(const uint8_t* newAppKEY);
 void loadAppKEY();
+
+void saveTriggerEdgeConfig();
+void loadTriggerEdgeConfig();

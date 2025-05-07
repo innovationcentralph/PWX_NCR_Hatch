@@ -227,6 +227,35 @@ void handleCLICommand(const String& command) {
     Serial.println();
   }
 
+  else if (command.startsWith("AT+SET_DCI_EDGE=")) {
+    String payload = command.substring(strlen("AT+SET_DCI_EDGE="));
+    payload.trim();
+
+    int index = 0;
+    int lastPos = 0;
+    for (int i = 0; i < payload.length() && index < 6; i++) {
+      if (payload.charAt(i) == ',' || i == payload.length() - 1) {
+        int endPos = (payload.charAt(i) == ',') ? i : i + 1;
+        String valStr = payload.substring(lastPos, endPos);
+        dryContacts[index].triggerOnHigh = (valStr.toInt() == 1);
+        index++;
+        lastPos = i + 1;
+      }
+    }
+
+    saveTriggerEdgeConfig();
+    Serial.println("[CLI] DCI edge configuration saved.");
+  }
+
+  else if (command.equalsIgnoreCase("AT+GET_DCI_EDGE")) {
+    Serial.print("[CLI] Trigger edges: ");
+    for (int i = 0; i < 6; i++) {
+      Serial.print(dryContacts[i].triggerOnHigh ? "1" : "0");
+      if (i < 5) Serial.print(",");
+    }
+    Serial.println();
+  }
+
 
 
 
@@ -249,12 +278,12 @@ void handleCLICommand(const String& command) {
     Serial.println(F("AT+GET_PASSKEY                 - Show current passkey"));
     Serial.println(F("AT+SET_DEVEUI=<16 hex chars>    - Set DevEUI (e.g., AT+SET_DEVEUI=1010101007DFF66C)"));
     Serial.println(F("AT+GET_DEVEUI                   - Show current DevEUI"));
-
     Serial.println(F("AT+SET_APPEUI=<16 HEX>           - Set AppEUI (8 bytes, hex format)"));
     Serial.println(F("AT+GET_APPEUI                   - Show current AppEUI"));
     Serial.println(F("AT+SET_APPKEY=<32 HEX>          - Set AppKey (16 bytes, hex format)"));
     Serial.println(F("AT+GET_APPKEY                   - Show current AppKey"));
-
+    Serial.println(F("AT+SET_DCI_EDGE=1,0,1,1,0,0       - Set edge per DCI (1=HIGH trigger, 0=LOW)"));
+    Serial.println(F("AT+GET_DCI_EDGE                   - Show current trigger edges"));
     Serial.println(F("--------------------------------\n"));
   }
 

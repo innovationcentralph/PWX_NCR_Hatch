@@ -15,12 +15,14 @@ struct DryContactInput {
   uint8_t pin;
   bool state;
   bool isHot;
+  bool triggerOnHigh; // true = trigger on LOW->HIGH, false = trigger on HIGH->LOW
 };
 
 struct SensorReadings {
   float temperature;
   float humidity;
   bool dciStates[6];
+  
 };
 
 extern DryContactInput dryContacts[6];

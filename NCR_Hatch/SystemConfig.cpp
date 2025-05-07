@@ -13,6 +13,7 @@ void loadConfig() {
   EEPROM.get(EEPROM_PASSKEY_ADDR, passkey);
   EEPROM.get(EEPROM_HOT_TIMEOUT_ADDR, hotAlarmDurationMs);
   loadHotConfig();
+  loadTriggerEdgeConfig();
   /* Comment out for testing */
   // loadDevEUI();
   // loadAppEUI();
@@ -106,4 +107,18 @@ void saveAppKEY(const uint8_t* newAppKEY) {
 
 void loadAppKEY() {
   EEPROM.get(EEPROM_ADDR_APPKEY, appKEY);
+}
+
+void saveTriggerEdgeConfig() {
+  for (int i = 0; i < 6; i++) {
+    EEPROM.write(EEPROM_TRIGGER_EDGE_ADDR + i, dryContacts[i].triggerOnHigh ? 1 : 0);
+  }
+  EEPROM.commit();
+}
+
+void loadTriggerEdgeConfig() {
+  for (int i = 0; i < 6; i++) {
+    uint8_t val = EEPROM.read(EEPROM_TRIGGER_EDGE_ADDR + i);
+    dryContacts[i].triggerOnHigh = (val == 1);
+  }
 }

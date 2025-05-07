@@ -14,12 +14,12 @@ static TimerHandle_t hotAlarmTimer = NULL;
 #define NUM_DCI 6
 
 DryContactInput dryContacts[NUM_DCI] = {
-  { DCI_1, false, false },
-  { DCI_2, false, true },
-  { DCI_3, false, false },
-  { DCI_4, false, false },
-  { DCI_5, false, false },
-  { DCI_6, false, false }
+  { DCI_1, false, false, true },  // trigger on HIGH
+  { DCI_2, false, true, false },  // trigger on LOW
+  { DCI_3, false, false, true },
+  { DCI_4, false, false, true },
+  { DCI_5, false, false, true },
+  { DCI_6, false, false, true }
 };
 
 SensorReadings currentSensorReadings;
@@ -78,8 +78,8 @@ void monitorDryContactsTask(void *pvParameters) {
 
           bool hotTriggered = false;
 
-          // Print message
-          if (dryContacts[i].isHot && currentState == HIGH) {
+
+          if (dryContacts[i].isHot && ((dryContacts[i].triggerOnHigh && currentState == HIGH) || (!dryContacts[i].triggerOnHigh && currentState == LOW))) {
             if (!xTimerIsTimerActive(hotAlarmTimer)) {
               xTimerStart(hotAlarmTimer, 0);
               Serial.printf("[HOT] Timer started by DCI_%d\n", i + 1);
@@ -122,10 +122,10 @@ void monitorSHTSensorTask(void *pvParameters) {
   } else {
     Serial.println("Found SHT4x sensor");
     Serial.print("Serial number 0x");
-    Serial.println(sht4.readSerial(), HEX);  
+    Serial.println(sht4.readSerial(), HEX);
 
     // Set SHT Precision
-    sht4.setPrecision(SHT4X_MED_PRECISION); 
+    sht4.setPrecision(SHT4X_MED_PRECISION);
     sht4.setHeater(SHT4X_NO_HEATER);
     switch (sht4.getPrecision()) {
       case SHT4X_HIGH_PRECISION:
