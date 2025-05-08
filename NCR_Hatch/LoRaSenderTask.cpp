@@ -18,6 +18,7 @@ HeartbeatPayload _heartbeatPayload;
 EventsPayload _eventsPayload;
 TheftAlarmPayload _alarmPayload;
 PassKeyPayload _passkeyPayload;
+PowerPayload _powerPayload;
 
 void createLoRaQueues() {
   theftAlarmQueue = xQueueCreate(5, sizeof(TheftAlarmPayload));
@@ -99,6 +100,8 @@ void loraSenderTask(void* pvParameters) {
 
         continue;
       }
+
+      // Priority 5: Diagnostics
 
       if (xQueueReceive(powerPayloadQueue, &_powerPayload, 0) == pdPASS) {
         sendPowerPayload(_powerPayload); 
