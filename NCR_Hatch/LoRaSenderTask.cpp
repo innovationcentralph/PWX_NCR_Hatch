@@ -12,6 +12,7 @@ QueueHandle_t theftAlarmQueue;
 QueueHandle_t eventsQueue;
 QueueHandle_t heartbeatQueue;
 QueueHandle_t passKeyQueue;
+QueueHandle_t powerPayloadQueue;
 
 HeartbeatPayload _heartbeatPayload;
 EventsPayload _eventsPayload;
@@ -23,6 +24,7 @@ void createLoRaQueues() {
   eventsQueue = xQueueCreate(5, sizeof(EventsPayload));
   heartbeatQueue = xQueueCreate(5, sizeof(HeartbeatPayload));
   passKeyQueue = xQueueCreate(5, sizeof(PassKeyPayload));
+  powerPayloadQueue = xQueueCreate(1, sizeof(PowerPayload));
 }
 
 void loraSenderTask(void* pvParameters) {
@@ -97,10 +99,31 @@ void loraSenderTask(void* pvParameters) {
 
         continue;
       }
+
+      if (xQueueReceive(powerPayloadQueue, &_powerPayload, 0) == pdPASS) {
+        sendPowerPayload(_powerPayload); 
+
+
+
+        Serial.println("[LoRa] Power Payload Data:");
+        Serial.printf("VBAT=%.2f,VIN=%.2f,VSYS=%.2f,IBAT=%.2f,IIN=%.2f \r\n",
+                 _powerPayload.vbat,
+                 _powerPayload.vin,
+                 _powerPayload.vsys,
+                 _powerPayload.ibat,
+                 _powerPayload.iin);
+
+        continue;
+      }
+
+      // If all queues are empty
+      Serial.println("[LoRa] No data to send. All queues are empty.");
+
+    }else{
+      Serial.println("Lora Handler Busy at the moment");
     }
 
-    // If all queues are empty
-    Serial.println("[LoRa] No data to send. All queues are empty.");
+    
   }
 }
 
@@ -142,8 +165,8 @@ void sendEventsPayload(const EventsPayload& payload) {
   _eventPayloadPtr->dryContactStat.dc6 = _eventsPayload.dciStates[5];
   if (isLoRaReady) {
     processUplink(EVENTS, CONFIRMED_UPLINK);
+    Serial.println("[LoRa] Sent Events Payload");
   }
-  Serial.println("[LoRa] Sent Events Payload");
 }
 
 void sendHeartbeatPayload(const HeartbeatPayload& payload) {
@@ -162,8 +185,8 @@ void sendHeartbeatPayload(const HeartbeatPayload& payload) {
 
   if (isLoRaReady) {
     processUplink(HEARTBEAT, UNCONFIRMED_UPLINK);
+    Serial.println("[LoRa] Sent Heartbeat Payload");
   }
-  Serial.println("[LoRa] Sent Heartbeat Payload");
 }
 
 void sendPasskeyPayload(const PassKeyPayload& payload) {
@@ -173,15 +196,30 @@ void sendPasskeyPayload(const PassKeyPayload& payload) {
 
   _keysPayloadPtr->passkeyStat = _passkeyPayload.passkeyStat;
   _keysPayloadPtr->passkeyType = _passkeyPayload.passkeyType;
-  _keysPayloadPtr->len         = _passkeyPayload.len;
+  _keysPayloadPtr->len = _passkeyPayload.len;
 
   memcpy(_keysPayloadPtr->passk, payload.passk, payload.len);
 
   if (isLoRaReady) {
     processUplink(KEYS, UNCONFIRMED_UPLINK);
+    Serial.println("[LoRa] Sent PassKey Payload");
   }
-  Serial.println("[LoRa] Sent PassKey Payload");
-  
+}
+
+void sendPowerPayload(const PowerPayload& payload) {
+
+  diagnosticPayload_s* _powerPayloadPtr;
+  _powerPayloadPtr = getDiagnosticPayloadInstance();
+  _powerPayloadPtr->dcVolt.all = _powerPayload.vin * 10;
+  _powerPayloadPtr->dcCurr.all = _powerPayload.iin * 10;
+  _powerPayloadPtr->battVolt.all = _powerPayload.vbat * 10;
+  _powerPayloadPtr->battCurr.all = _powerPayload.vin * 10;
+
+
+  if (isLoRaReady) {
+    processUplink(DIAGNOSTIC, UNCONFIRMED_UPLINK);
+    Serial.println("[LoRa] Sent Power Payload");
+  }
 }
 
 
@@ -197,5 +235,3 @@ void createLoRaSenderTask() {
     NULL,
     1);
 }
-
-

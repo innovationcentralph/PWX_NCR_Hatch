@@ -11,6 +11,9 @@ Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 
 static TimerHandle_t hotAlarmTimer = NULL;
 
+//Function Prototypes
+uint16_t readLTC4015(uint8_t reg);
+
 #define NUM_DCI 6
 
 DryContactInput dryContacts[NUM_DCI] = {
@@ -199,6 +202,43 @@ void enqueueHeartbeatEvery(TickType_t intervalMs) {
     1);
 }
 
+void powerMonitorTask(void* pvParameters) {
+  while (1) {
+    PowerPayload payload;
+
+    payload.vbat = readLTC4015(REG_VBAT) * 192.264 / 1000000.0 * 4.0;
+    payload.vin  = readLTC4015(REG_VIN) * 1.648 / 1000.0;
+    payload.vsys = readLTC4015(REG_VSYS) * 1.648 / 1000.0;
+    payload.ibat = readLTC4015(REG_IBAT) * 1.46487 / 1000000.0;
+    payload.iin  = readLTC4015(REG_IIN) * 1.46487 / 1000000.0;
+
+    Serial.printf("[LTC4015] VBAT: %.2fV | VIN: %.2fV | VSYS: %.2fV | IBAT: %.3fA | IIN: %.3fA\n",
+                  payload.vbat, payload.vin, payload.vsys, payload.ibat, payload.iin);
+
+    if (xQueueSend(powerPayloadQueue, &payload, 0) == pdPASS) {
+      Serial.println("[Power] Enqueued power payload");
+    } else {
+      Serial.println("[Power] Queue full, skipping enqueue");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(10000));  // every 10 seconds
+  }
+}
+
+uint16_t readLTC4015(uint8_t reg) {
+  Wire.beginTransmission(LTC4015_ADDR);
+  Wire.write(reg);
+  Wire.endTransmission(false);  // repeated start
+  Wire.requestFrom(LTC4015_ADDR, 2);
+  if (Wire.available() == 2) {
+    uint16_t lsb = Wire.read();
+    uint16_t msb = Wire.read();
+    return (msb << 8) | lsb;
+  }
+  return 0xFFFF;
+}
+
+
 void createSensorTasks() {
 
   hotAlarmTimer = xTimerCreate(
@@ -223,7 +263,7 @@ void createSensorTasks() {
     "DryContactMonitor",
     2048,
     NULL,
-    2,
+    3,
     NULL,
     0);
 
@@ -232,9 +272,19 @@ void createSensorTasks() {
     "SHTSensorMonitor",
     4096,
     NULL,
-    1,
+    2,
     NULL,
     0);
+
+     xTaskCreatePinnedToCore(
+    powerMonitorTask,
+    "PowerMonitor",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
 
   enqueueHeartbeatEvery(heartbeatInterval);
 }

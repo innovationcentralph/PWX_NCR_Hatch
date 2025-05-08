@@ -35,10 +35,19 @@ typedef struct PassKeyPayload
     char passk[8];
 };
 
+struct PowerPayload {
+  float vbat;    // Battery voltage
+  float vin;     // Input voltage
+  float vsys;    // System voltage
+  float ibat;    // Battery current
+  float iin;     // Input current
+};
+
 extern QueueHandle_t theftAlarmQueue;
 extern QueueHandle_t eventsQueue;
 extern QueueHandle_t heartbeatQueue;
 extern QueueHandle_t passKeyQueue;
+extern QueueHandle_t powerPayloadQueue;
 
 void createLoRaQueues();
 void createLoRaSenderTask();
@@ -47,3 +56,4 @@ void sendTheftAlarmPayload(const TheftAlarmPayload& payload);
 void sendEventsPayload(const EventsPayload& payload);
 void sendHeartbeatPayload(const HeartbeatPayload& payload);
 void sendPasskeyPayload(const PassKeyPayload& payload);
+void sendPowerPayload(const PowerPayload& payload);
