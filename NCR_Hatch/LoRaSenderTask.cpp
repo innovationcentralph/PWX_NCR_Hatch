@@ -32,69 +32,71 @@ void loraSenderTask(void* pvParameters) {
   while (1) {
     vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(loraSendInterval));
 
-    // Priority 1: Theft Alarm
-    if (xQueueReceive(theftAlarmQueue, &_alarmPayload, 0) == pdPASS) {
-      sendTheftAlarmPayload(_alarmPayload);
+    if(getLoraJoinStatus() && !checkIfLoRaTxBusy()){
+      // Priority 1: Theft Alarm
+      if (xQueueReceive(theftAlarmQueue, &_alarmPayload, 0) == pdPASS) {
+        sendTheftAlarmPayload(_alarmPayload);
 
-      // Print theft alarm data
-      Serial.printf("[LoRa] Theft Alarm Triggered: %s\n", _alarmPayload.alarmType);
-      for (int i = 0; i < MAX_DCI; i++) {
-        Serial.printf("  DCI_%d: %s\n", i + 1, _alarmPayload.dciStates[i] ? "HIGH" : "LOW");
+        // Print theft alarm data
+        Serial.printf("[LoRa] Theft Alarm Triggered: %s\n", _alarmPayload.alarmType);
+        for (int i = 0; i < MAX_DCI; i++) {
+          Serial.printf("  DCI_%d: %s\n", i + 1, _alarmPayload.dciStates[i] ? "HIGH" : "LOW");
+        }
+
+
+        continue;
       }
 
+      // Priority 2: Passkey
+      if (xQueueReceive(passKeyQueue, &_passkeyPayload, 0) == pdPASS) {
+        sendPasskeyPayload(_passkeyPayload);
 
-      continue;
-    }
+        // Print PassKey data
+        Serial.printf("[LoRa] Pass Key Payload: \r\n");
+        Serial.printf("[LoRa] Status: %s\r\n", _passkeyPayload.passkeyStat == CORRECT_PASSKEY ? "CORRECT" : "INCORRECT");
+        Serial.printf("[LoRa] Type: %s\r\n", _passkeyPayload.passkeyType == SILENT ? "SILENT" : "NOT SILENT");
+        Serial.printf("[LoRa] Length: %d\r\n", _passkeyPayload.len);
 
-    // Priority 2: Passkey
-    if (xQueueReceive(passKeyQueue, &_passkeyPayload, 0) == pdPASS) {
-      sendPasskeyPayload(_passkeyPayload);
+        Serial.print("[LoRa] PassKey: ");
+        for (uint8_t x = 0; x < _passkeyPayload.len; x++) {
+          Serial.print(_passkeyPayload.passk[x]);
+        }
+        Serial.println();
 
-      // Print PassKey data
-      Serial.printf("[LoRa] Pass Key Payload: \r\n");
-      Serial.printf("[LoRa] Status: %s\r\n", _passkeyPayload.passkeyStat == CORRECT_PASSKEY ? "CORRECT" : "INCORRECT");
-      Serial.printf("[LoRa] Type: %s\r\n", _passkeyPayload.passkeyType == SILENT ? "SILENT" : "NOT SILENT");
-      Serial.printf("[LoRa] Length: %d\r\n", _passkeyPayload.len);
-
-      Serial.print("[LoRa] PassKey: ");
-      for (uint8_t x = 0; x < _passkeyPayload.len; x++) {
-        Serial.print(_passkeyPayload.passk[x]);
+        continue;
       }
-      Serial.println();
 
-      continue;
-    }
+      // Priority 3: Events
 
-    // Priority 3: Events
+      if (xQueueReceive(eventsQueue, &_eventsPayload, 0) == pdPASS) {
+        sendEventsPayload(_eventsPayload);
 
-    if (xQueueReceive(eventsQueue, &_eventsPayload, 0) == pdPASS) {
-      sendEventsPayload(_eventsPayload);
+        // Print events data
+        Serial.println("[LoRa] Events Payload Data:");
+        for (int i = 0; i < MAX_DCI; i++) {
+          Serial.printf("  DCI_%d: %s\n", i + 1, _eventsPayload.dciStates[i] ? "HIGH" : "LOW");
+        }
+        Serial.printf("  Temperature: %.2f °C\n", _eventsPayload.temperature);
+        Serial.printf("     Humidity: %.2f RH\n", _eventsPayload.humidity);
 
-      // Print events data
-      Serial.println("[LoRa] Events Payload Data:");
-      for (int i = 0; i < MAX_DCI; i++) {
-        Serial.printf("  DCI_%d: %s\n", i + 1, _eventsPayload.dciStates[i] ? "HIGH" : "LOW");
+        continue;
       }
-      Serial.printf("  Temperature: %.2f °C\n", _eventsPayload.temperature);
-      Serial.printf("     Humidity: %.2f RH\n", _eventsPayload.humidity);
 
-      continue;
-    }
+      // Priority 4: Heartbeat
 
-    // Priority 4: Heartbeat
+      if (xQueueReceive(heartbeatQueue, &_heartbeatPayload, 0) == pdPASS) {
+        sendHeartbeatPayload(_heartbeatPayload);
 
-    if (xQueueReceive(heartbeatQueue, &_heartbeatPayload, 0) == pdPASS) {
-      sendHeartbeatPayload(_heartbeatPayload);
+        // Print heartbeat data
+        Serial.println("[LoRa] Heartbeat Payload Data:");
+        for (int i = 0; i < MAX_DCI; i++) {
+          Serial.printf("  DCI_%d: %s\n", i + 1, _heartbeatPayload.dciStates[i] ? "HIGH" : "LOW");
+        }
+        Serial.printf("  Temperature: %.2f °C\n", _heartbeatPayload.temperature);
+        Serial.printf("     Humidity: %.2f °C\n", _heartbeatPayload.humidity);
 
-      // Print heartbeat data
-      Serial.println("[LoRa] Heartbeat Payload Data:");
-      for (int i = 0; i < MAX_DCI; i++) {
-        Serial.printf("  DCI_%d: %s\n", i + 1, _heartbeatPayload.dciStates[i] ? "HIGH" : "LOW");
+        continue;
       }
-      Serial.printf("  Temperature: %.2f °C\n", _heartbeatPayload.temperature);
-      Serial.printf("     Humidity: %.2f °C\n", _heartbeatPayload.humidity);
-
-      continue;
     }
 
     // If all queues are empty

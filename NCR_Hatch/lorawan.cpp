@@ -1,6 +1,7 @@
 // Online C compiler to run C program online
 
 #include "lorawan.h"
+#include <Arduino.h> 
 
 static serial_tx_function_t serial_tx= 0;
 
@@ -37,6 +38,35 @@ void lora_serial_init(serial_tx_function_t logger) {
     serial_tx = logger;
 }
 
+bool checkIfConfirmedUplinkOk(void)
+{
+    bool status = isConfirmedUplinkOk; 
+    return status;
+}
+void updateConfirmedUplinkOk(bool stat)
+{
+    isConfirmedUplinkOk = stat;
+}
+
+bool checkIfConfirmedUplinkSending(void)
+{
+    bool status = isConfirmedUplinkSending; 
+    return status;
+}
+void updateConfirmedUplinkSending(bool stat)
+{
+    isConfirmedUplinkSending = stat;
+}
+
+bool checkIfLoRaTxBusy(void)
+{
+    bool status = isLoRaTxBusy; 
+    return status;
+}
+void updateIfLoRaTxBusy(bool stat)
+{
+    isLoRaTxBusy = stat;
+}
 
 int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
 { 
@@ -106,8 +136,43 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
         break; 
 
     }
-    err  = loraTransmit(txBuffer, len, 2, uplinkType);
-
+    // err  = loraTransmit(txBuffer, len, 2, uplinkType);
+    updateIfLoRaTxBusy(true);
+    switch(uplinkType)
+    {
+        int attempt; 
+        case UNCONFIRMED_UPLINK:{
+            for (attempt = 0; attempt < UNCONFIRMED_UPLINK_ATTEMPT_CNT; attempt++)
+            {
+                err  = loraTransmit(txBuffer, len, 2, uplinkType);
+            }
+        }
+        break; 
+	    case CONFIRMED_UPLINK: {
+            for (attempt = 0; attempt < CONFIRMED_UPLINK_ATTEMPT_CNT; attempt++)
+            {
+                err  = loraTransmit(txBuffer, len, 2, uplinkType);
+                updateConfirmedUplinkSending(true);
+                 vTaskDelay(pdMS_TO_TICKS(10000));
+                  Serial.println("[LoRa] Attempting to send confirmed uplink...");
+                 if(checkIfConfirmedUplinkOk())
+                 {
+                    Serial.println("[LoRa] Confimed uplink sent...");
+                    updateConfirmedUplinkOk(false); 
+                    updateIfLoRaTxBusy(false);
+                    updateConfirmedUplinkSending(false);
+                    break; 
+                 }
+                 else 
+                 {
+                    Serial.println("[LoRa] Failed to send confimed uplink...");
+                 }
+            }
+        }
+        break; 
+    }
+    updateIfLoRaTxBusy(false);
+    updateConfirmedUplinkSending(false);
     return 0; 
 } 
 

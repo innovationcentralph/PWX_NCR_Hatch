@@ -28,6 +28,7 @@ void loraInitTask(void* pvParameters) {
       isLoRaReady = true;
       setLoraJoinStatus(isLoRaReady);  // added to start processing Rx Handler
       Serial.println("[LoRa] Initialization complete.");
+      setInitialJoinFlag(true);
     } else {
       Serial.println("[LoRa] Init failed, retrying in 5 seconds...");
       vTaskDelay(pdMS_TO_TICKS(5000));

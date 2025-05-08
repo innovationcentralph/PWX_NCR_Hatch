@@ -68,6 +68,9 @@ int checkResponse (char * buffer, ERROR_MSGS errMsg);
 bool getLoraJoinStatus(void);
 void setLoraJoinStatus(bool stat);
 
+bool getInitialJoinFlag(void);
+void setInitialJoinFlag(bool stat);
+
 /* Function pointers */
 static void (*okCallback)(void) = NULL;
 static void (*sendConfCallback)(void) = NULL;
