@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #define MAX_LORA_BUFFER_SIZE 50
 
+#define UNCONFIRMED_UPLINK_ATTEMPT_CNT  1
+#define CONFIRMED_UPLINK_ATTEMPT_CNT    3
+
+
 typedef enum{
 	UNCONFIRMED_UPLINK= 0, 
 	CONFIRMED_UPLINK // (need to return ack)
@@ -119,6 +123,17 @@ eventsPayload_s * getEventsPayloadInstance();
 diagnosticPayload_s * getDiagnosticPayloadInstance();
 hearbeatPayload_s * heartbeatPayloadInstance();
 keysPayload_s * keysPayloadInstance();
+
+static bool isLoRaTxBusy = false; 
+static bool isConfirmedUplinkOk = false; 
+static bool isConfirmedUplinkSending = false; 
+
+bool checkIfConfirmedUplinkSending(void);
+void updateConfirmedUplinkSending(bool stat);
+bool checkIfConfirmedUplinkOk(void);
+void updateConfirmedUplinkOk(bool stat);
+bool checkIfLoRaTxBusy(void);
+void updateIfLoRaTxBusy(bool stat);
 
 typedef void (*serial_tx_function_t)(const char*);
 
