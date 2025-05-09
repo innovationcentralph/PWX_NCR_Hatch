@@ -61,6 +61,22 @@ typedef union
     };
 }dryContact_u; 
 
+typedef union 
+{
+    uint8_t all;
+    struct{
+        bool wc1:1; 
+        bool wc2:1;
+        bool reserved1:1; 
+        bool reserved2:1; 
+        bool reserved3:1;
+        bool reserved4:1; 
+        bool reserved5:1; 
+        bool reserved6:1; 
+    };
+}wetContact_u; 
+
+
 typedef union
 {
     int16_t all;
@@ -90,6 +106,7 @@ typedef struct
     int16 dcCurr; 
     int16 battVolt; 
     int16 battCurr;
+    wetContact_u wetContactStat;
 }diagnosticPayload_s; 
 
 
