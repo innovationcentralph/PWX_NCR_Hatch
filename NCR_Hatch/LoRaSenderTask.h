@@ -41,6 +41,7 @@ struct PowerPayload {
   float vsys;    // System voltage
   float ibat;    // Battery current
   float iin;     // Input current
+  bool DCO2State;
 };
 
 extern QueueHandle_t theftAlarmQueue;

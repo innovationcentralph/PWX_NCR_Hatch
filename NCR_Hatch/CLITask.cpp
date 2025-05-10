@@ -2,6 +2,7 @@
 #include "SensorMonitorTask.h"
 #include "KeypadTask.h"
 #include "SystemConfig.h"
+#include "PinConfig.h"
 
 #define CLI_TASK_STACK_SIZE 4096
 #define CLI_TASK_PRIORITY 1
@@ -256,6 +257,21 @@ void handleCLICommand(const String& command) {
     Serial.println();
   }
 
+  else if (command.equalsIgnoreCase("AT+DCO2=ON")) {
+    digitalWrite(DCO_2, RELAY_ON);
+    saveDCO2State(true);
+    Serial.println("[CLI] DCO_2 turned ON.");
+  }
+
+  else if (command.equalsIgnoreCase("AT+DCO2=OFF")) {
+    digitalWrite(DCO_2, RELAY_OFF);
+    saveDCO2State(false);
+    Serial.println("[CLI] DCO_2 turned OFF.");
+  }
+
+
+
+
 
 
 
@@ -284,6 +300,11 @@ void handleCLICommand(const String& command) {
     Serial.println(F("AT+GET_APPKEY                   - Show current AppKey"));
     Serial.println(F("AT+SET_DCI_EDGE=1,0,1,1,0,0       - Set edge per DCI (1=HIGH trigger, 0=LOW)"));
     Serial.println(F("AT+GET_DCI_EDGE                   - Show current trigger edges"));
+    Serial.println(F("AT+DCO2=ON                     - Turn ON DCO_2 (Relay 2)"));
+    Serial.println(F("AT+DCO2=OFF                    - Turn OFF DCO_2 (Relay 2)"));
+
+
+
     Serial.println(F("--------------------------------\n"));
   }
 

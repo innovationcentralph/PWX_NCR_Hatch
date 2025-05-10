@@ -90,6 +90,7 @@ typedef struct
     int16 dcCurr; 
     int16 battVolt; 
     int16 battCurr;
+    bool dcoState;
 }diagnosticPayload_s; 
 
 

@@ -1,3 +1,4 @@
+#include "esp32-hal-gpio.h"
 // SensorMonitorTask.cpp
 #include "SensorMonitorTask.h"
 #include "LoRaSenderTask.h"
@@ -211,9 +212,10 @@ void powerMonitorTask(void* pvParameters) {
     payload.vsys = readLTC4015(REG_VSYS) * 1.648 / 1000.0;
     payload.ibat = readLTC4015(REG_IBAT) * 1.46487 / 1000000.0;
     payload.iin  = readLTC4015(REG_IIN) * 1.46487 / 1000000.0;
+    payload.DCO2State = digitalRead(DCO_2);
 
-    Serial.printf("[LTC4015] VBAT: %.2fV | VIN: %.2fV | VSYS: %.2fV | IBAT: %.3fA | IIN: %.3fA\n",
-                  payload.vbat, payload.vin, payload.vsys, payload.ibat, payload.iin);
+    Serial.printf("[LTC4015] VBAT: %.2fV | VIN: %.2fV | VSYS: %.2fV | IBAT: %.3fA | IIN: %.3fA | DCO2: %d \n",
+                  payload.vbat, payload.vin, payload.vsys, payload.ibat, payload.iin, payload.DCO2State);
 
     if (xQueueSend(powerPayloadQueue, &payload, 0) == pdPASS) {
       Serial.println("[Power] Enqueued power payload");

@@ -106,6 +106,7 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             txBuffer[len++]=diagnosticPayload.battVolt.lower; 
             txBuffer[len++]=diagnosticPayload.battCurr.upper; 
             txBuffer[len++]=diagnosticPayload.battCurr.lower; 
+            txBuffer[len++]=diagnosticPayload.dcoState;
             break;
         case EVENTS:
             // printf("Events\n\r"); 

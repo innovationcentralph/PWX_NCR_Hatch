@@ -217,6 +217,7 @@ void sendPowerPayload(const PowerPayload& payload) {
   _powerPayloadPtr->dcCurr.all = _powerPayload.iin * 10;
   _powerPayloadPtr->battVolt.all = _powerPayload.vbat * 10;
   _powerPayloadPtr->battCurr.all = _powerPayload.vin * 10;
+  _powerPayloadPtr->dcoState = _powerPayload.DCO2State;
 
 
   if (isLoRaReady) {

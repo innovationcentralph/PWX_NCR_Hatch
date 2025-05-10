@@ -122,3 +122,14 @@ void loadTriggerEdgeConfig() {
     dryContacts[i].triggerOnHigh = (val == 1);
   }
 }
+
+void saveDCO2State(bool isOn) {
+  EEPROM.begin(512);
+  EEPROM.write(EEPROM_DCO2_STATE_ADDR, isOn ? 1 : 0);
+  EEPROM.commit();
+}
+
+bool loadDCO2State() {
+  EEPROM.begin(512);
+  return EEPROM.read(EEPROM_DCO2_STATE_ADDR) == 1;
+}

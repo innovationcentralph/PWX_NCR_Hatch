@@ -28,6 +28,7 @@
 #define EEPROM_HOT_FLAGS_ADDR          20  
 #define EEPROM_HOT_TIMEOUT_ADDR        28 
 #define EEPROM_TRIGGER_EDGE_ADDR       40
+#define EEPROM_DCO2_STATE_ADDR         50 
 
 
 #define EEPROM_ADDR_DEVEUI   100        // 8 bytes
@@ -67,3 +68,6 @@ void loadAppKEY();
 
 void saveTriggerEdgeConfig();
 void loadTriggerEdgeConfig();
+
+void saveDCO2State(bool isOn);
+bool loadDCO2State();
