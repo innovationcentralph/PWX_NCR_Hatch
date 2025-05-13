@@ -49,10 +49,15 @@ void setup() {
   Wire.begin();
 
   pinMode(DCO_1, OUTPUT);
+  pinMode(DCO_2, OUTPUT);
   digitalWrite(DCO_1, RELAY_OFF);
+  
 
   // Load config before sensor/tasks
   loadConfig();  // Includes intervals, passkey, HOT config,
+
+  bool dco2InitialState = loadDCO2State();
+  digitalWrite(DCO_2, dco2InitialState ? RELAY_ON : RELAY_OFF);
 
   // Start non-blocking LoRa initialization
 

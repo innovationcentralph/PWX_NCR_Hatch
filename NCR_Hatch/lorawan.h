@@ -106,7 +106,7 @@ typedef struct
     int16 dcCurr; 
     int16 battVolt; 
     int16 battCurr;
-    wetContact_u wetContactStat;
+    bool dcoState;
 }diagnosticPayload_s; 
 
 

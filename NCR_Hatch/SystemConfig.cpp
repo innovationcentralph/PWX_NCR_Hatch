@@ -4,6 +4,7 @@
 uint32_t loraSendInterval = DEFAULT_SEND_INTERVAL_MS;
 uint32_t heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL_MS;
 uint32_t hotAlarmDurationMs = DEFAULT_HOT_TIMEOUT_MS;
+uint32_t powerMonitorIntervalMs = DEFAULT_DIAGNOSTIC_INTERVAL_MS;
 char passkey[9] = DEFAULT_PASSKEY;
 
 void loadConfig() {
@@ -14,6 +15,7 @@ void loadConfig() {
   EEPROM.get(EEPROM_HOT_TIMEOUT_ADDR, hotAlarmDurationMs);
   loadHotConfig();
   loadTriggerEdgeConfig();
+  loadDiagnosticInterval();
   /* Comment out for testing */
   // loadDevEUI();
   // loadAppEUI();
@@ -120,5 +122,30 @@ void loadTriggerEdgeConfig() {
   for (int i = 0; i < 6; i++) {
     uint8_t val = EEPROM.read(EEPROM_TRIGGER_EDGE_ADDR + i);
     dryContacts[i].triggerOnHigh = (val == 1);
+  }
+}
+
+void saveDCO2State(bool isOn) {
+  EEPROM.begin(512);
+  EEPROM.write(EEPROM_DCO2_STATE_ADDR, isOn ? 1 : 0);
+  EEPROM.commit();
+}
+
+bool loadDCO2State() {
+  EEPROM.begin(512);
+  return EEPROM.read(EEPROM_DCO2_STATE_ADDR) == 1;
+}
+
+void saveDiagnosticInterval(uint32_t interval) {
+  EEPROM.begin(512);
+  EEPROM.put(EEPROM_DIAGNOSTIC_INTERVAL_ADDR, interval);
+  EEPROM.commit();
+}
+
+void loadDiagnosticInterval() {
+  EEPROM.begin(512);
+  EEPROM.get(EEPROM_DIAGNOSTIC_INTERVAL_ADDR, powerMonitorIntervalMs);
+  if (powerMonitorIntervalMs < 1000 || powerMonitorIntervalMs > 1800000) {
+    powerMonitorIntervalMs = 10000;  // Fallback to default
   }
 }
