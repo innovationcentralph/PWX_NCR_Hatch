@@ -238,16 +238,20 @@ void loraRxTask(void * parameters)
                     }
                     break; 
                     
-                    case  DL_WC_STATES_ID: {
-                      Serial.println("DL Wet Contact States ");
-                      String cmd = "";
-                      for (int i = 5; i >= 0; i--) 
+                    case  DL_DCO_STATES_ID: {
+                      Serial.println("DL DCO Contact State ");
+                      String cmdOn = "AT+DCO2=ON";
+                      String cmdOff = "AT+DCO2=OFF";
+                      if(numData[1] == 0)
                       {
-                        cmd += ((numData[1] >> i) & 0x01) ? '1' : '0';
-                        if (i > 0) cmd += ','; 
+                        Serial.println(cmdOff);
+                        handleCLICommand(cmdOff); 
                       }
-                      Serial.println(cmd);
-                      handleCLICommand(cmd); 
+                      else if (numData[1]  >= 1)
+                      {
+                        Serial.println(cmdOn);
+                        handleCLICommand(cmdOn); 
+                      }
                     }
                     break;
 
