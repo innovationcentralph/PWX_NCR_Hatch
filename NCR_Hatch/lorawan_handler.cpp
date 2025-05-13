@@ -8,7 +8,7 @@
 #include "lorawan_handler.h"
 #include "CLITask.h"
 
-#define NEXT_CHECK_LINK_AFTER 200
+#define NEXT_CHECK_LINK_AFTER 3600 // check link every hour
 #define NUM_OF_LINK_CHECK 5
 /* Variables */
 /* LoRaWAN Credentials*/
@@ -238,6 +238,23 @@ void loraRxTask(void * parameters)
                     }
                     break; 
                     
+                    case  DL_DCO_STATES_ID: {
+                      Serial.println("DL DCO Contact State ");
+                      String cmdOn = "AT+DCO2=ON";
+                      String cmdOff = "AT+DCO2=OFF";
+                      if(numData[1] == 0)
+                      {
+                        Serial.println(cmdOff);
+                        handleCLICommand(cmdOff); 
+                      }
+                      else if (numData[1]  >= 1)
+                      {
+                        Serial.println(cmdOn);
+                        handleCLICommand(cmdOn); 
+                      }
+                    }
+                    break;
+
                     case DL_KEY_UPDATE_ENABLE_ID: 
                       Serial.print("Update credentials enable");
       

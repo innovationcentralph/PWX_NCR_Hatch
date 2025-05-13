@@ -60,7 +60,7 @@ function Decoder(bytes, port) {
             decoded.DC_CURRENT= toInt16LE(data[2], data[3])/10; 
             decoded.BATT_VOLT= toInt16LE(data[4], data[5])/10; 
             decoded.BATT_CURR= toInt16LE(data[6], data[7])/10;
-
+            decoded.DCO= data[8] & 0x01 ? "ON" : "OFF";
         } 
         else if (data[0] === 0xA5){ // change ng dry contact. tapos copy paste heart beat 
             decoded.PAYLOAD_TYPE = "EVENTS"; 
