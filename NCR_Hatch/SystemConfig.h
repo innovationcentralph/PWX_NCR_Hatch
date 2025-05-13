@@ -22,13 +22,14 @@
 // };
 
 
-#define EEPROM_SEND_INTERVAL_ADDR      0 
-#define EEPROM_HEARTBEAT_INTERVAL_ADDR 4 
-#define EEPROM_PASSKEY_ADDR            8
-#define EEPROM_HOT_FLAGS_ADDR          20  
-#define EEPROM_HOT_TIMEOUT_ADDR        28 
-#define EEPROM_TRIGGER_EDGE_ADDR       40
-#define EEPROM_DCO2_STATE_ADDR         50 
+#define EEPROM_SEND_INTERVAL_ADDR       0 
+#define EEPROM_HEARTBEAT_INTERVAL_ADDR  4 
+#define EEPROM_PASSKEY_ADDR             8
+#define EEPROM_HOT_FLAGS_ADDR           20  
+#define EEPROM_HOT_TIMEOUT_ADDR         28 
+#define EEPROM_TRIGGER_EDGE_ADDR        40
+#define EEPROM_DCO2_STATE_ADDR          50 
+#define EEPROM_DIAGNOSTIC_INTERVAL_ADDR 60
 
 
 #define EEPROM_ADDR_DEVEUI   100        // 8 bytes
@@ -41,10 +42,12 @@
 #define DEFAULT_HEARTBEAT_INTERVAL_MS  15000
 #define DEFAULT_PASSKEY                "123456"
 #define DEFAULT_HOT_TIMEOUT_MS         10000
+#define DEFAULT_DIAGNOSTIC_INTERVAL_MS 10000
 
 extern uint32_t loraSendInterval;
 extern uint32_t heartbeatInterval;
 extern uint32_t hotAlarmDurationMs;
+extern uint32_t powerMonitorIntervalMs;
 extern char passkey[9];
 
 extern uint8_t devEUI[8];
@@ -71,3 +74,6 @@ void loadTriggerEdgeConfig();
 
 void saveDCO2State(bool isOn);
 bool loadDCO2State();
+
+void saveDiagnosticInterval(uint32_t interval);
+void loadDiagnosticInterval();

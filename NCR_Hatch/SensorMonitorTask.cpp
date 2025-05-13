@@ -91,8 +91,7 @@ void monitorDryContactsTask(void *pvParameters) {
           bool hotTriggered = false;
 
           if (dryContacts[i].isHot) {
-            if ((dryContacts[i].triggerOnHigh && isRisingEdge) ||
-                (!dryContacts[i].triggerOnHigh && isFallingEdge)) {
+            if ((dryContacts[i].triggerOnHigh && isRisingEdge) || (!dryContacts[i].triggerOnHigh && isFallingEdge)) {
               if (!xTimerIsTimerActive(hotAlarmTimer)) {
                 xTimerStart(hotAlarmTimer, 0);
                 Serial.printf("[HOT] Timer started by DCI_%d\n", i + 1);
@@ -203,15 +202,15 @@ void enqueueHeartbeatEvery(TickType_t intervalMs) {
     1);
 }
 
-void powerMonitorTask(void* pvParameters) {
+void powerMonitorTask(void *pvParameters) {
   while (1) {
     PowerPayload payload;
 
     payload.vbat = readLTC4015(REG_VBAT) * 192.264 / 1000000.0 * 4.0;
-    payload.vin  = readLTC4015(REG_VIN) * 1.648 / 1000.0;
+    payload.vin = readLTC4015(REG_VIN) * 1.648 / 1000.0;
     payload.vsys = readLTC4015(REG_VSYS) * 1.648 / 1000.0;
     payload.ibat = readLTC4015(REG_IBAT) * 1.46487 / 1000000.0;
-    payload.iin  = readLTC4015(REG_IIN) * 1.46487 / 1000000.0;
+    payload.iin = readLTC4015(REG_IIN) * 1.46487 / 1000000.0;
     payload.DCO2State = digitalRead(DCO_2);
 
     Serial.printf("[LTC4015] VBAT: %.2fV | VIN: %.2fV | VSYS: %.2fV | IBAT: %.3fA | IIN: %.3fA | DCO2: %d \n",
@@ -223,7 +222,7 @@ void powerMonitorTask(void* pvParameters) {
       Serial.println("[Power] Queue full, skipping enqueue");
     }
 
-    vTaskDelay(pdMS_TO_TICKS(10000));  // every 10 seconds
+    vTaskDelay(pdMS_TO_TICKS(powerMonitorIntervalMs));  
   }
 }
 
@@ -278,15 +277,14 @@ void createSensorTasks() {
     NULL,
     0);
 
-     xTaskCreatePinnedToCore(
+  xTaskCreatePinnedToCore(
     powerMonitorTask,
     "PowerMonitor",
     4096,
     NULL,
     1,
     NULL,
-    0
-  );
+    0);
 
   enqueueHeartbeatEvery(heartbeatInterval);
 }
