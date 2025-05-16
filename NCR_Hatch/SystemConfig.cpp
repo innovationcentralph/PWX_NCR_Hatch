@@ -16,10 +16,10 @@ void loadConfig() {
   loadHotConfig();
   loadTriggerEdgeConfig();
   loadDiagnosticInterval();
-  /* Comment out for testing */
-  loadDevEUI();
-  loadAppEUI();
-  loadAppKEY();
+  /* Comment out for v1.0.1*/
+  // loadDevEUI();
+  // loadAppEUI();
+  // loadAppKEY();
 
   if (loraSendInterval < 1000 || loraSendInterval > 60000) {
     loraSendInterval = DEFAULT_SEND_INTERVAL_MS;
