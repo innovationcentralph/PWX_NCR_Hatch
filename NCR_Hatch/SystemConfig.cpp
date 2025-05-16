@@ -16,7 +16,7 @@ void loadConfig() {
   loadHotConfig();
   loadTriggerEdgeConfig();
   loadDiagnosticInterval();
-  /* Comment out for testing */
+  /* Comment out for fw v1.0.1 */
   loadDevEUI();
   loadAppEUI();
   loadAppKEY();

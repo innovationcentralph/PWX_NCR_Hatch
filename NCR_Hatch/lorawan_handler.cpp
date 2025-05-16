@@ -10,6 +10,7 @@
 
 #define NEXT_CHECK_LINK_AFTER 3600 // check link every hour
 #define NUM_OF_LINK_CHECK 5
+#define ECHO_RX_REPLY
 /* Variables */
 /* LoRaWAN Credentials*/
 
