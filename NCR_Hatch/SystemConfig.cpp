@@ -92,23 +92,44 @@ void loadDevEUI() {
 }
 
 void saveAppEUI(const uint8_t* newAppEUI) {
-  EEPROM.put(EEPROM_ADDR_APPEUI, *newAppEUI);
+  
+  // EEPROM.put(EEPROM_ADDR_APPEUI, *newAppEUI);
+  // EEPROM.commit();
+  // memcpy(appEUI, newAppEUI, sizeof(appEUI));
+
+  for (int i = 0; i < 8; i++) {
+    EEPROM.write(EEPROM_ADDR_APPEUI + i, newAppEUI[i]);
+    appEUI[i] = newAppEUI[i];  // Update global
+  }
   EEPROM.commit();
-  memcpy(appEUI, newAppEUI, sizeof(appEUI));
 }
 
 void loadAppEUI() {
-  EEPROM.get(EEPROM_ADDR_APPEUI, appEUI);
+  // EEPROM.get(EEPROM_ADDR_APPEUI, appEUI);
+
+  for (int i = 0; i < 8; i++) {
+    appEUI[i] = EEPROM.read(EEPROM_ADDR_APPEUI + i);
+  }
 }
 
 void saveAppKEY(const uint8_t* newAppKEY) {
-  EEPROM.put(EEPROM_ADDR_APPKEY, *newAppKEY);
+  // EEPROM.put(EEPROM_ADDR_APPKEY, *newAppKEY);
+  // EEPROM.commit();
+  // memcpy(appKEY, newAppKEY, sizeof(appKEY));
+
+  for (int i = 0; i < 16; i++) {
+    EEPROM.write(EEPROM_ADDR_APPKEY + i, newAppKEY[i]);
+    appKEY[i] = newAppKEY[i];  // Update global
+  }
   EEPROM.commit();
-  memcpy(appKEY, newAppKEY, sizeof(appKEY));
 }
 
 void loadAppKEY() {
-  EEPROM.get(EEPROM_ADDR_APPKEY, appKEY);
+  // EEPROM.get(EEPROM_ADDR_APPKEY, appKEY);
+
+   for (int i = 0; i < 16; i++) {
+    appKEY[i] = EEPROM.read(EEPROM_ADDR_APPKEY + i);
+  }
 }
 
 void saveTriggerEdgeConfig() {
