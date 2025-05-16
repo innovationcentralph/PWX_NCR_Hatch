@@ -17,7 +17,9 @@ uint16_t txInterval = 60000;
 
 HardwareSerial lorawanSerial(2);
 
-
+/* holder for */
+char dlAppEui[MAX_BUFFER_SIZE], dlDevEui[MAX_BUFFER_SIZE], dlAppKey[MAX_BUFFER_SIZE]; 
+bool dlCredEnable = false, dlAppEuiReceived=false, dlDevEuiReceived=false, dlAppKeyReceived=false; 
 
 
 int err= 0, count = 0; 
@@ -29,7 +31,7 @@ keysPayload_s * keysPayloadPtr;
 
 /**/
 bool isCheckingLink=false; 
-uint8_t nextCheckLinkCounter=0; 
+uint16_t nextCheckLinkCounter=0; 
 uint8_t successfulLinkCheck=0; 
 uint8_t sentCheckLinkReq=0; 
 uint8_t linkCheckDelayCounter=0; 
@@ -118,7 +120,6 @@ void loraRxTask(void * parameters)
                 strcpy(charPayload, payload); 
                 uint8_t numData[len/2]; 
                 stringToHex(charPayload, numData);
-
                 if(port == 5)
                 {
                   switch(numData[0])
@@ -126,28 +127,31 @@ void loraRxTask(void * parameters)
                     case DL_APPEUI_ID: {
                       uint8_t appEUI[8];
                       memcpy(appEUI, &numData[1], 8 * sizeof(uint8_t));
-                      sprintf(printBuffer,"APPEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+                      sprintf(dlAppEui,"AT+SET_APPEUI=%02X%02X%02X%02X%02X%02X%02X%02X\r\n", 
                       appEUI[0], appEUI[1], appEUI[2], appEUI[3], appEUI[4], appEUI[5], appEUI[6], appEUI[7] );
-                      Serial.print(printBuffer);
+                      Serial.print(dlAppEui); 
+                      dlAppEuiReceived=true;
                     }
                     break; 
                     
                     case DL_DEVEUI_ID: {
                       uint8_t devEUI[8];
                       memcpy(devEUI, &numData[1], 8 * sizeof(uint8_t));
-                      sprintf(printBuffer,"DEVEUI=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+                      sprintf(dlDevEui,"AT+SET_DEVEUI=%02X%02X%02X%02X%02X%02X%02X%02X\r\n", 
                       devEUI[0], devEUI[1], devEUI[2], devEUI[3], devEUI[4], devEUI[5], devEUI[6], devEUI[7] );
-                      Serial.print(printBuffer);
+                      Serial.print(dlDevEui);
+                      dlDevEuiReceived=true; 
                     }
                     break; 
                     
                     case DL_APPKEY_ID: 
                       uint8_t appKEY[16];
                       memcpy(appKEY, &numData[1], 16 * sizeof(uint8_t));
-                      sprintf(printBuffer,"APPKEY=%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", 
+                      sprintf(dlAppKey,"AT+SET_APPKEY=%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X\r\n", 
                       appKEY[0], appKEY[1], appKEY[2], appKEY[3], appKEY[4], appKEY[5], appKEY[6], appKEY[7],
                       appKEY[8], appKEY[9], appKEY[10], appKEY[11], appKEY[12], appKEY[13], appKEY[14], appKEY[15]);
-                      Serial.print(printBuffer);
+                      Serial.print(dlAppKey);
+                      dlAppKeyReceived=true;
 
                     break; 
                     case DL_TX_INTERVAL_ID: {  
@@ -257,17 +261,49 @@ void loraRxTask(void * parameters)
 
                     case DL_KEY_UPDATE_ENABLE_ID: 
                       Serial.print("Update credentials enable");
-      
+                      dlCredEnable = true; 
                     break; 
 
                     case DL_KEY_UPDATE_DISABLE_ID: 
                       Serial.print("Update credentials disable");
-
+                      dlCredEnable = false;
                     break; 
 
                     case DL_SAVE_SETTINGS_ID: 
-                      Serial.print("Saving Settings");
-          
+                      Serial.println("Saving Settings");
+                      if(!dlCredEnable)
+                      {
+                        Serial.println("Failed: Please enable key update first!");
+                        break; 
+                      }
+                      if(!dlAppEuiReceived)
+                      {
+                        Serial.println("Failed: No AppEUI Received");
+                        break; 
+                      }
+                      if(!dlDevEuiReceived)
+                      {
+                        Serial.println("Failed: No DevEUI Received");
+                        break; 
+                      }
+                      if(!dlAppKeyReceived)
+                      {
+                        Serial.println("Failed: No Appkey Received");
+                        break; 
+                      }
+                      Serial.println("Sending CLI Commands");
+                      handleCLICommand(dlAppEui); 
+                      Serial.println(dlAppEui);
+                      vTaskDelay(pdMS_TO_TICKS(500));
+                      handleCLICommand(dlDevEui); 
+                      Serial.println(dlDevEui);
+                      vTaskDelay(pdMS_TO_TICKS(500));
+                      handleCLICommand(dlAppKey); 
+                      Serial.println(dlAppKey);
+                      dlCredEnable = false; 
+                      dlAppEuiReceived = false; 
+                      dlDevEuiReceived = false; 
+                      dlAppKeyReceived = false; 
                     break; 
                     default: 
                     break; 
