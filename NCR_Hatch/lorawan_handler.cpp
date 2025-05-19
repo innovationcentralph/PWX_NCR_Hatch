@@ -318,7 +318,9 @@ void loraRxTask(void * parameters)
           if (strstr(reply.c_str(), "OK") != NULL) { 
             Serial.println("OK");
             processOK();
-            vTaskDelay(10 / portTICK_PERIOD_MS);
+            // String cmd = "AT+TXP=1\r";
+            // lorawanSerial.print(cmd);
+            // vTaskDelay(10 / portTICK_PERIOD_MS);
           }
           #ifdef ECHO_RX_REPLY
           Serial.println(reply); // Echo the received reply
@@ -530,7 +532,17 @@ int initLora(uint8_t * appEUI, uint8_t * devEUI, uint8_t * appKEY, uint8_t * dev
   if(err) return err;  
   Serial.print("Dev ADDR is set\n\r"); 
 
-  /* Set devADDR */
+
+  /* Set tx power */
+  sprintf(buffer,"AT+TXP=0\r\n");
+  lorawanSerial.print(buffer);
+  vTaskDelay(pdMS_TO_TICKS(100));
+  memset(buffer, 0, sizeof(buffer)); 
+  err = checkResponse(buffer, FAILED_WRITE_TXPOW); 
+  if(err) return err;  
+  Serial.print("TX POWER is set to 0\n\r"); 
+
+  /* save */
 
   lorawanSerial.print("AT+CS\r");
   vTaskDelay(pdMS_TO_TICKS(100));
@@ -584,6 +596,17 @@ int switchClass(void)
   if(err) return err;  
   Serial.print("Switched to class C \n\r"); 
 
+  // lorawanSerial.print("AT+RX1DL=1000\r");
+  // vTaskDelay(pdMS_TO_TICKS(10));
+  // err = checkResponse(buffer, FAILED_WRITE_RX1DL); 
+  // if(err) return err;  
+  // Serial.print("Set RX 1 DL to 1000 \n\r"); 
+
+  // lorawanSerial.print("AT+RX2DL=2000\r");
+  // vTaskDelay(pdMS_TO_TICKS(10));
+  // err = checkResponse(buffer, FAILED_WRITE_RX2DL); 
+  // if(err) return err;  
+  // Serial.print("Set RX 1 DL to 2000 \n\r"); 
 
   /* Initial Transmission */
   lorawanSerial.print("AT+SEND=10:0:1234\r\n");
