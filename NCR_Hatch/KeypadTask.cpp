@@ -6,6 +6,7 @@
 #include "SystemConfig.h"  // At the top
 #include "LoRaSenderTask.h"
 #include <LiquidCrystal_I2C.h>
+#include "lorawan_handler.h"
 
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);
@@ -115,6 +116,30 @@ void keypadTask(void* pvParameters) {
       }
     } else {
       lastKey = currentKey;
+    }
+    switch(loraStat)
+    {
+      case JOINING:{
+        lcd.setCursor(15, 0);
+        lcd.print("J");  
+      }
+      break; 
+      case CONNECTED:{
+        lcd.setCursor(15, 0);
+        lcd.print("C");
+      }
+      break;
+
+      case UPLINK:{
+        lcd.setCursor(15, 0);
+        lcd.print("U");
+      }
+      break; 
+      case DOWNLINK: {
+        lcd.setCursor(15, 0);
+        lcd.print("D");
+      }
+      break; 
     }
 
     vTaskDelay(pdMS_TO_TICKS(50));

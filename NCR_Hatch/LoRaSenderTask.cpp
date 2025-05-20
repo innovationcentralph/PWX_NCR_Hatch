@@ -46,7 +46,7 @@ void loraSenderTask(void* pvParameters) {
           Serial.printf("  DCI_%d: %s\n", i + 1, _alarmPayload.dciStates[i] ? "HIGH" : "LOW");
         }
 
-
+        loraStat = UPLINK;
         continue;
       }
 
@@ -65,7 +65,7 @@ void loraSenderTask(void* pvParameters) {
           Serial.print(_passkeyPayload.passk[x]);
         }
         Serial.println();
-
+        loraStat = UPLINK;
         continue;
       }
 
@@ -81,7 +81,7 @@ void loraSenderTask(void* pvParameters) {
         }
         Serial.printf("  Temperature: %.2f °C\n", _eventsPayload.temperature);
         Serial.printf("     Humidity: %.2f RH\n", _eventsPayload.humidity);
-
+        loraStat = UPLINK;
         continue;
       }
 
@@ -97,7 +97,7 @@ void loraSenderTask(void* pvParameters) {
         }
         Serial.printf("  Temperature: %.2f °C\n", _heartbeatPayload.temperature);
         Serial.printf("     Humidity: %.2f °C\n", _heartbeatPayload.humidity);
-
+        loraStat = UPLINK;
         continue;
       }
 
@@ -115,7 +115,7 @@ void loraSenderTask(void* pvParameters) {
                  _powerPayload.vsys,
                  _powerPayload.ibat,
                  _powerPayload.iin);
-
+        loraStat = UPLINK;
         continue;
       }
 

@@ -17,8 +17,10 @@ void wdtReset();
 void loraInitTask(void* pvParameters) {
   int err;
   while (!isLoRaReady) {
+    loraStat = JOINING;
     err = initLora(appEUI, devEUI, appKEY, devADDR);
     if (err == 0) {
+      loraStat = CONNECTED;
       isLoRaReady = true;
       setLoraJoinStatus(isLoRaReady);  // added to start processing Rx Handler
       Serial.println("[LoRa] Initialization complete.");
