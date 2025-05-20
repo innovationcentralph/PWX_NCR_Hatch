@@ -8,6 +8,10 @@
 #include <LiquidCrystal_I2C.h>
 #include "lorawan_handler.h"
 
+#define BACKLIGHT_TIMEOUT  20000
+// #define LORA_STAT_DISP_EN // uncomment to enable display of lora stat on lcd
+// #define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout 
+
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);
 LiquidCrystal_I2C lcd(0x26, 16, 2);
@@ -23,6 +27,7 @@ static char myKeys[16] = {
 static char enteredPassword[9];
 static uint8_t inputIndex = 0;
 static uint8_t lastKey = I2C_KEYPAD_NOKEY;
+unsigned long lcdBacklightTimer=0;  
 
 void triggerSilentAlarm();
 void enqueuePasskeyPayload(const char* entered, uint8_t length, bool isCorrect, bool isSilent);
@@ -42,8 +47,13 @@ void keypadTask(void* pvParameters) {
 
   while (1) {
     uint8_t currentKey = keyPad.getKey();
-
+    
     if (currentKey == I2C_KEYPAD_NOKEY) {
+#ifdef BACKLIGHT_TIMEOUT_EN
+      if ((millis() - lcdBacklightTimer) > BACKLIGHT_TIMEOUT) {
+        lcd.noBacklight();
+      }
+#endif
       if (lastKey != I2C_KEYPAD_NOKEY && myKeys[lastKey] != 0) {
         char key = myKeys[lastKey];
 
@@ -115,8 +125,13 @@ void keypadTask(void* pvParameters) {
         lastKey = I2C_KEYPAD_NOKEY;
       }
     } else {
+#ifdef BACKLIGHT_TIMEOUT_EN
+      lcd.backlight();
+      lcdBacklightTimer = millis();
+#endif
       lastKey = currentKey;
     }
+#ifdef LORA_STAT_DISP_EN
     switch(loraStat)
     {
       case JOINING:{
@@ -141,6 +156,7 @@ void keypadTask(void* pvParameters) {
       }
       break; 
     }
+  #endif
 
     vTaskDelay(pdMS_TO_TICKS(50));
   }
