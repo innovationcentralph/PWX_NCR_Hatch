@@ -123,6 +123,7 @@ void loraRxTask(void * parameters)
                 stringToHex(charPayload, numData);
                 if(port == 5)
                 {
+                  loraStat = DOWNLINK;
                   switch(numData[0])
                   { 
                     case DL_APPEUI_ID: {
@@ -356,8 +357,10 @@ void loraTxTask(void * parameters)
                     Serial.println("[LoRa] Device is disconnected, need to rejoin");
                     setLoraJoinStatus(false);
                     rejoin = true; 
+                    loraStat = JOINING;
                 } else {
                     Serial.println("[LoRa] Connection is Good");
+                    loraStat = CONNECTED;
                 }
                 isCheckingLink = false;
                 successfulLinkCheck = 0;
