@@ -30,6 +30,8 @@
 #define EEPROM_TRIGGER_EDGE_ADDR        40
 #define EEPROM_DCO2_STATE_ADDR          50 
 #define EEPROM_DIAGNOSTIC_INTERVAL_ADDR 60
+#define EEPROM_DEBOUNCE_DELAY_ADDR      70
+#define EEPROM_SIREN_COOLDOWN_ADDR      80
 
 
 #define EEPROM_ADDR_DEVEUI   100        // 8 bytes
@@ -43,11 +45,15 @@
 #define DEFAULT_PASSKEY                "123456"
 #define DEFAULT_HOT_TIMEOUT_MS         10000
 #define DEFAULT_DIAGNOSTIC_INTERVAL_MS 10000
+#define DEFAULT_DC_DEBOUNCE_MS         2000
+#define DEFAULT_SIREN_COOLDOWN_MS      300000
 
 extern uint32_t loraSendInterval;
 extern uint32_t heartbeatInterval;
 extern uint32_t hotAlarmDurationMs;
 extern uint32_t powerMonitorIntervalMs;
+extern uint32_t debounceDelayMs;
+extern uint32_t hotCooldownMs;
 extern char passkey[9];
 
 extern uint8_t devEUI[8];
@@ -77,3 +83,9 @@ bool loadDCO2State();
 
 void saveDiagnosticInterval(uint32_t interval);
 void loadDiagnosticInterval();
+
+void saveDebounceDelay(uint32_t val);
+void loadDebounceDelay();
+
+void saveHotCooldown(uint32_t val);
+void loadHotCooldown();

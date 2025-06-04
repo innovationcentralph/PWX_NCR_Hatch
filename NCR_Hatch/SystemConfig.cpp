@@ -1,10 +1,13 @@
 #include "SystemConfig.h"
 #include "SensorMonitorTask.h"
 
-uint32_t loraSendInterval = DEFAULT_SEND_INTERVAL_MS;
-uint32_t heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL_MS;
-uint32_t hotAlarmDurationMs = DEFAULT_HOT_TIMEOUT_MS;
+uint32_t loraSendInterval       = DEFAULT_SEND_INTERVAL_MS;
+uint32_t heartbeatInterval      = DEFAULT_HEARTBEAT_INTERVAL_MS;
+uint32_t hotAlarmDurationMs     = DEFAULT_HOT_TIMEOUT_MS;
 uint32_t powerMonitorIntervalMs = DEFAULT_DIAGNOSTIC_INTERVAL_MS;
+uint32_t debounceDelayMs        = DEFAULT_DC_DEBOUNCE_MS; 
+uint32_t hotCooldownMs          = DEFAULT_SIREN_COOLDOWN_MS;
+
 char passkey[9] = DEFAULT_PASSKEY;
 
 void loadConfig() {
@@ -16,6 +19,8 @@ void loadConfig() {
   loadHotConfig();
   loadTriggerEdgeConfig();
   loadDiagnosticInterval();
+  loadDebounceDelay();
+  loadHotCooldown();
 
   loadDevEUI();
   loadAppEUI();
@@ -169,5 +174,34 @@ void loadDiagnosticInterval() {
   EEPROM.get(EEPROM_DIAGNOSTIC_INTERVAL_ADDR, powerMonitorIntervalMs);
   if (powerMonitorIntervalMs < 1000 || powerMonitorIntervalMs > 1800000) {
     powerMonitorIntervalMs = 10000;  // Fallback to default
+  }
+}
+
+
+void saveDebounceDelay(uint32_t val) {
+  EEPROM.begin(512);
+  EEPROM.put(EEPROM_DEBOUNCE_DELAY_ADDR, val);
+  EEPROM.commit();
+}
+
+void loadDebounceDelay() {
+  EEPROM.begin(512);
+  EEPROM.get(EEPROM_DEBOUNCE_DELAY_ADDR, debounceDelayMs);
+  if (debounceDelayMs < 100 || debounceDelayMs > 10000) {
+    debounceDelayMs = 2000;  // Fallback to default if invalid
+  }
+}
+
+void saveHotCooldown(uint32_t val) {
+  EEPROM.begin(512);
+  EEPROM.put(EEPROM_SIREN_COOLDOWN_ADDR, val);
+  EEPROM.commit();
+}
+
+void loadHotCooldown() {
+  EEPROM.begin(512);
+  EEPROM.get(EEPROM_SIREN_COOLDOWN_ADDR, hotCooldownMs);
+  if (hotCooldownMs < 1000 || hotCooldownMs > 600000) {
+    hotCooldownMs = 30000;  // fallback to default if invalid
   }
 }

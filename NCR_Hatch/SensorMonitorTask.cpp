@@ -11,6 +11,9 @@
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 
 static TimerHandle_t hotAlarmTimer = NULL;
+static bool hotCooldownActive = false;
+static TimerHandle_t hotCooldownTimer = NULL;
+
 
 //Function Prototypes
 uint16_t readLTC4015(uint8_t reg);
@@ -56,7 +59,6 @@ void enqueueTheftAlarm(TheftAlarmType type) {
 }
 
 void monitorDryContactsTask(void *pvParameters) {
-  const int debounceDelay = 50;  // ms
   bool lastReadState[NUM_DCI];
   unsigned long lastDebounceTime[NUM_DCI];
 
@@ -77,7 +79,7 @@ void monitorDryContactsTask(void *pvParameters) {
         lastReadState[i] = currentState;
       }
 
-      if ((millis() - lastDebounceTime[i]) > debounceDelay) {
+      if ((millis() - lastDebounceTime[i]) > debounceDelayMs) {
         if (currentState != dryContacts[i].state) {
           bool prevState = dryContacts[i].state;
           dryContacts[i].state = currentState;
@@ -90,7 +92,7 @@ void monitorDryContactsTask(void *pvParameters) {
 
           bool hotTriggered = false;
 
-          if (dryContacts[i].isHot) {
+          if (dryContacts[i].isHot && !hotCooldownActive) {
             if ((dryContacts[i].triggerOnHigh && isRisingEdge) || (!dryContacts[i].triggerOnHigh && isFallingEdge)) {
               if (!xTimerIsTimerActive(hotAlarmTimer)) {
                 xTimerStart(hotAlarmTimer, 0);
@@ -222,7 +224,7 @@ void powerMonitorTask(void *pvParameters) {
       Serial.println("[Power] Queue full, skipping enqueue");
     }
 
-    vTaskDelay(pdMS_TO_TICKS(powerMonitorIntervalMs));  
+    vTaskDelay(pdMS_TO_TICKS(powerMonitorIntervalMs));
   }
 }
 
@@ -251,6 +253,24 @@ void createSensorTasks() {
       Serial.println("[HOT] Timer expired — ALARM would trigger here.");
       digitalWrite(DCO_1, RELAY_ON);
       enqueueTheftAlarm(HATCH_OPEN);
+
+      // Start cooldown AFTER siren fires
+      if (!xTimerIsTimerActive(hotCooldownTimer)) {
+        hotCooldownActive = true;
+        xTimerStart(hotCooldownTimer, 0);
+        Serial.println("[HOT] Cooldown timer started.");
+      }
+
+    });
+
+  hotCooldownTimer = xTimerCreate(
+    "HotCooldownTimer",
+    pdMS_TO_TICKS(hotCooldownMs),
+    pdFALSE,
+    NULL,
+    [](TimerHandle_t xTimer) {
+      hotCooldownActive = false;
+      Serial.println("[HOT] Cooldown expired — Hot alarm can now trigger again.");
     });
 
 

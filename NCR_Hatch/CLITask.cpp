@@ -285,6 +285,37 @@ void handleCLICommand(const String& command) {
     Serial.printf("[CLI] Current diagnostic interval: %lu ms\n", powerMonitorIntervalMs);
   }
 
+  else if (command.startsWith("AT+SET_DEBOUNCE=")) {
+    String valueStr = command.substring(strlen("AT+SET_DEBOUNCE="));
+    uint32_t val = valueStr.toInt();
+    if (val >= 100 && val <= 10000) {
+      debounceDelayMs = val;
+      saveDebounceDelay(val);
+      Serial.printf("[CLI] Debounce delay set to %lu ms\n", debounceDelayMs);
+    } else {
+      Serial.println("[CLI] Invalid value. Must be 100–10000 ms.");
+    }
+  }
+
+  else if (command.equalsIgnoreCase("AT+GET_DEBOUNCE")) {
+    Serial.printf("[CLI] Current debounce delay: %lu ms\n", debounceDelayMs);
+  }
+
+  else if (command.startsWith("AT+SET_HOT_COOLDOWN=")) {
+    String valueStr = command.substring(strlen("AT+SET_HOT_COOLDOWN="));
+    uint32_t val = valueStr.toInt();
+    if (val >= 1000 && val <= 600000) {
+      hotCooldownMs = val;
+      saveHotCooldown(val);
+      Serial.printf("[CLI] Hot cooldown set to %lu ms\n", hotCooldownMs);
+    } else {
+      Serial.println("[CLI] Invalid value. Must be 1000–600000 ms.");
+    }
+  }
+
+  else if (command.equalsIgnoreCase("AT+GET_HOT_COOLDOWN")) {
+    Serial.printf("[CLI] Current hot cooldown: %lu ms\n", hotCooldownMs);
+  }
 
 
 
@@ -317,13 +348,14 @@ void handleCLICommand(const String& command) {
     Serial.println(F("AT+GET_APPKEY                   - Show current AppKey"));
     Serial.println(F("AT+SET_DCI_EDGE=1,0,1,1,0,0       - Set edge per DCI (1=HIGH trigger, 0=LOW)"));
     Serial.println(F("AT+GET_DCI_EDGE                   - Show current trigger edges"));
-    Serial.println(F("AT+DCO2=ON                     - Turn ON DCO_2 (Relay 2)"));
-    Serial.println(F("AT+DCO2=OFF                    - Turn OFF DCO_2 (Relay 2)"));
-    Serial.println(F("AT+SET_DIAG_INTERVAL=<ms>     - Set diagnostic interval (1000–60000 ms)"));
-    Serial.println(F("AT+GET_DIAG_INTERVAL          - Show current diagnostic interval"));
-
-
-
+    Serial.println(F("AT+DCO2=ON                      - Turn ON DCO_2 (Relay 2)"));
+    Serial.println(F("AT+DCO2=OFF                     - Turn OFF DCO_2 (Relay 2)"));
+    Serial.println(F("AT+SET_DIAG_INTERVAL=<ms>       - Set diagnostic interval (1000–60000 ms)"));
+    Serial.println(F("AT+GET_DIAG_INTERVAL            - Show current diagnostic interval"));
+    Serial.println(F("AT+SET_DEBOUNCE=<ms>            - Set debounce time (100–10000 ms)"));
+    Serial.println(F("AT+GET_DEBOUNCE                 - Get current debounce time"));
+    Serial.println(F("AT+SET_HOT_COOLDOWN=<ms>        - Set hot alarm cooldown time (1000–600000 ms)"));
+    Serial.println(F("AT+GET_HOT_COOLDOWN             - Get current hot alarm cooldown time"));
 
     Serial.println(F("--------------------------------\n"));
   }
