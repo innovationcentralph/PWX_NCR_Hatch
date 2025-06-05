@@ -255,12 +255,7 @@ void createSensorTasks() {
       enqueueTheftAlarm(HATCH_OPEN);
 
       // Start cooldown AFTER siren fires
-      if (!xTimerIsTimerActive(hotCooldownTimer)) {
-        hotCooldownActive = true;
-        xTimerStart(hotCooldownTimer, 0);
-        Serial.println("[HOT] Cooldown timer started.");
-      }
-
+      startSirenCooldownTimer();
     });
 
   hotCooldownTimer = xTimerCreate(
@@ -316,4 +311,12 @@ void stopHotAlarmTimer() {
     Serial.println("[HOT] Timer stopped globally.");
   }
   digitalWrite(DCO_1, RELAY_OFF);
+}
+
+void startSirenCooldownTimer() {
+  if (!xTimerIsTimerActive(hotCooldownTimer)) {
+    hotCooldownActive = true;
+    xTimerStart(hotCooldownTimer, 0);
+    Serial.println("[HOT] Cooldown timer started.");
+  }
 }

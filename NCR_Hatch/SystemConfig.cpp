@@ -201,7 +201,7 @@ void saveHotCooldown(uint32_t val) {
 void loadHotCooldown() {
   EEPROM.begin(512);
   EEPROM.get(EEPROM_SIREN_COOLDOWN_ADDR, hotCooldownMs);
-  if (hotCooldownMs < 1000 || hotCooldownMs > 600000) {
-    hotCooldownMs = 30000;  // fallback to default if invalid
+  if (hotCooldownMs < 120000 || hotCooldownMs > 600000) {
+    hotCooldownMs = 300000;  // fallback to default if invalid
   }
 }

@@ -8,9 +8,9 @@
 #include <LiquidCrystal_I2C.h>
 #include "lorawan_handler.h"
 
-#define BACKLIGHT_TIMEOUT  20000
+#define BACKLIGHT_TIMEOUT 20000
 // #define LORA_STAT_DISP_EN // uncomment to enable display of lora stat on lcd
-// #define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout 
+// #define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout
 
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);
@@ -27,7 +27,7 @@ static char myKeys[16] = {
 static char enteredPassword[9];
 static uint8_t inputIndex = 0;
 static uint8_t lastKey = I2C_KEYPAD_NOKEY;
-unsigned long lcdBacklightTimer=0;  
+unsigned long lcdBacklightTimer = 0;
 
 void triggerSilentAlarm();
 void enqueuePasskeyPayload(const char* entered, uint8_t length, bool isCorrect, bool isSilent);
@@ -47,7 +47,7 @@ void keypadTask(void* pvParameters) {
 
   while (1) {
     uint8_t currentKey = keyPad.getKey();
-    
+
     if (currentKey == I2C_KEYPAD_NOKEY) {
 #ifdef BACKLIGHT_TIMEOUT_EN
       if ((millis() - lcdBacklightTimer) > BACKLIGHT_TIMEOUT) {
@@ -74,6 +74,10 @@ void keypadTask(void* pvParameters) {
               isCorrect = true;
               Serial.println("[Success] Password correct.");
               stopHotAlarmTimer();
+
+              // Start cooldown timer for siren
+              startSirenCooldownTimer();
+
             } else if (enteredPassword[strlen(passkey)] == '0') {
               isCorrect = true;
               isSilent = true;
@@ -132,31 +136,34 @@ void keypadTask(void* pvParameters) {
       lastKey = currentKey;
     }
 #ifdef LORA_STAT_DISP_EN
-    switch(loraStat)
-    {
-      case JOINING:{
-        lcd.setCursor(15, 0);
-        lcd.print("J");  
-      }
-      break; 
-      case CONNECTED:{
-        lcd.setCursor(15, 0);
-        lcd.print("C");
-      }
-      break;
+    switch (loraStat) {
+      case JOINING:
+        {
+          lcd.setCursor(15, 0);
+          lcd.print("J");
+        }
+        break;
+      case CONNECTED:
+        {
+          lcd.setCursor(15, 0);
+          lcd.print("C");
+        }
+        break;
 
-      case UPLINK:{
-        lcd.setCursor(15, 0);
-        lcd.print("U");
-      }
-      break; 
-      case DOWNLINK: {
-        lcd.setCursor(15, 0);
-        lcd.print("D");
-      }
-      break; 
+      case UPLINK:
+        {
+          lcd.setCursor(15, 0);
+          lcd.print("U");
+        }
+        break;
+      case DOWNLINK:
+        {
+          lcd.setCursor(15, 0);
+          lcd.print("D");
+        }
+        break;
     }
-  #endif
+#endif
 
     vTaskDelay(pdMS_TO_TICKS(50));
   }

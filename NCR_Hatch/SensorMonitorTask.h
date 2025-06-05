@@ -33,6 +33,7 @@ void createSensorTasks();
 SensorReadings getSensorReadings();
 
 void stopHotAlarmTimer();
+void startSirenCooldownTimer();
 
 
 enum TheftAlarmType {
