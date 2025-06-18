@@ -6,6 +6,9 @@
 #include <stdbool.h> 
 #include <string.h>
 #include <stdlib.h>
+
+#define MAX_DCI 6
+
 #define MAX_LORA_BUFFER_SIZE 50
 
 #define UNCONFIRMED_UPLINK_ATTEMPT_CNT  1
@@ -23,7 +26,8 @@ typedef enum
 	SILENT_ALARM, //(Confirmed uplink) 
 	HEARTBEAT,// (Un confirmed uplink every 15mins)
 	DIAGNOSTIC,
-	EVENTS, 
+	EVENTS,
+  COMPRESSED_EVENTS, 
     KEYS,
 
 } PAYLOAD_TYPE;
@@ -60,6 +64,13 @@ typedef union
         bool reserved2:1; 
     };
 }dryContact_u; 
+
+typedef struct
+{
+    uint16_t riseCount;       // LOW → HIGH transitions
+    uint16_t fallCount;       // HIGH → LOW transitions
+    bool currentState;        // Latest known state (HIGH or LOW)
+} dryContactCompressed_s;
 
 typedef union 
 {
@@ -102,6 +113,14 @@ typedef struct
 
 typedef struct
 {
+    EVENT_TYPE eventOccured;
+    int16 temperature; 
+    int16 humidity; 
+    dryContactCompressed_s dryContactStat[MAX_DCI];
+}compressedEventsPayload_s; 
+
+typedef struct
+{
     int16 dcVolt; 
     int16 dcCurr; 
     int16 battVolt; 
@@ -132,6 +151,7 @@ static eventsPayload_s eventsPayload;
 static diagnosticPayload_s diagnosticPayload; 
 static hearbeatPayload_s heartbeatPayload; 
 static keysPayload_s keysPayload; 
+static compressedEventsPayload_s compressedEventsPayload; 
 
 
 /*To access structure outside the code  */
@@ -140,6 +160,7 @@ eventsPayload_s * getEventsPayloadInstance();
 diagnosticPayload_s * getDiagnosticPayloadInstance();
 hearbeatPayload_s * heartbeatPayloadInstance();
 keysPayload_s * keysPayloadInstance();
+compressedEventsPayload_s * getCompressedEventsPayloadInstance();
 
 static bool isLoRaTxBusy = false; 
 static bool isConfirmedUplinkOk = false; 

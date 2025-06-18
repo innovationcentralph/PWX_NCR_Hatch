@@ -14,6 +14,9 @@ static TimerHandle_t hotAlarmTimer = NULL;
 static bool hotCooldownActive = false;
 static TimerHandle_t hotCooldownTimer = NULL;
 
+CompressedEventsPayload _compressedEventsPayload;
+bool eventPending = false;
+
 
 //Function Prototypes
 uint16_t readLTC4015(uint8_t reg);
@@ -68,6 +71,11 @@ void monitorDryContactsTask(void *pvParameters) {
     lastReadState[i] = dryContacts[i].state;
     lastDebounceTime[i] = millis();
     currentSensorReadings.dciStates[i] = dryContacts[i].state;
+
+    // Init compressed payload state
+    _compressedEventsPayload.dciInfo[i].currentState = dryContacts[i].state;
+    _compressedEventsPayload.dciInfo[i].lowToHighCount = 0;
+    _compressedEventsPayload.dciInfo[i].highToLowCount = 0;
   }
 
   while (1) {
@@ -90,6 +98,33 @@ void monitorDryContactsTask(void *pvParameters) {
           bool isRisingEdge = (prevState == LOW && currentState == HIGH);
           bool isFallingEdge = (prevState == HIGH && currentState == LOW);
 
+          // Track counts in compressedEventsPayload
+          if (isRisingEdge) {
+            _compressedEventsPayload.dciInfo[i].lowToHighCount++;
+          } else if (isFallingEdge) {
+            _compressedEventsPayload.dciInfo[i].highToLowCount++;
+          }
+          _compressedEventsPayload.dciInfo[i].currentState = currentState;
+
+          // Update temp/hum for snapshot
+          SensorReadings snapshot = getSensorReadings();
+          _compressedEventsPayload.temperature = snapshot.temperature;
+          _compressedEventsPayload.humidity = snapshot.humidity;
+
+          // Serial.println("[EVENT] Compressed DCI Event Payload:");
+          // for (int i = 0; i < MAX_DCI; i++) {
+          //   Serial.printf("  DCI_%d: State=%s, RISE=%u, FALL=%u\n", i + 1,
+          //                 compressedEventsPayload.dciInfo[i].currentState ? "HIGH" : "LOW",
+          //                 compressedEventsPayload.dciInfo[i].lowToHighCount,
+          //                 compressedEventsPayload.dciInfo[i].highToLowCount);
+          // }
+          // Serial.printf("  Temperature: %.2f °C\n", compressedEventsPayload.temperature);
+          // Serial.printf("     Humidity: %.2f RH\n", compressedEventsPayload.humidity);
+
+
+          eventPending = true;  
+
+
           bool hotTriggered = false;
 
           if (dryContacts[i].isHot && !hotCooldownActive) {
@@ -109,18 +144,18 @@ void monitorDryContactsTask(void *pvParameters) {
                         currentState == HIGH ? "HIGH" : "LOW",
                         dryContacts[i].triggerOnHigh ? "High" : "Low");
 
-          // Enqueue to Events Queue for all edges
-          EventsPayload evt;
-          SensorReadings snapshot = getSensorReadings();  // now includes updated DCI states
-          memcpy(evt.dciStates, snapshot.dciStates, sizeof(evt.dciStates));
-          evt.temperature = snapshot.temperature;
-          evt.humidity = snapshot.humidity;
+          // // Enqueue to Events Queue for all edges
+          // EventsPayload evt;
+          // SensorReadings snapshot = getSensorReadings();  // now includes updated DCI states
+          // memcpy(evt.dciStates, snapshot.dciStates, sizeof(evt.dciStates));
+          // evt.temperature = snapshot.temperature;
+          // evt.humidity = snapshot.humidity;
 
-          if (xQueueSend(eventsQueue, &evt, 0) == pdPASS) {
-            Serial.println("[Event] Enqueued due to DCI edge");
-          } else {
-            Serial.println("[Event] Queue Full - event not sent");
-          }
+          // if (xQueueSend(eventsQueue, &evt, 0) == pdPASS) {
+          //   Serial.println("[Event] Enqueued due to DCI edge");
+          // } else {
+          //   Serial.println("[Event] Queue Full - event not sent");
+          // }
         }
       }
     }
@@ -273,6 +308,8 @@ void createSensorTasks() {
   for (int i = 0; i < NUM_DCI; i++) {
     pinMode(dryContacts[i].pin, INPUT);
   }
+
+  memset(&compressedEventsPayload, 0, sizeof(compressedEventsPayload));
 
   xTaskCreatePinnedToCore(
     monitorDryContactsTask,

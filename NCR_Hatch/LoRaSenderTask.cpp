@@ -35,7 +35,7 @@ void loraSenderTask(void* pvParameters) {
   while (1) {
     vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(loraSendInterval));
 
-    if(getLoraJoinStatus() && !checkIfLoRaTxBusy()){
+    if (getLoraJoinStatus() && !checkIfLoRaTxBusy()) {
       // Priority 1: Theft Alarm
       if (xQueueReceive(theftAlarmQueue, &_alarmPayload, 0) == pdPASS) {
         sendTheftAlarmPayload(_alarmPayload);
@@ -70,17 +70,41 @@ void loraSenderTask(void* pvParameters) {
       }
 
       // Priority 3: Events
+      // if (xQueueReceive(eventsQueue, &_eventsPayload, 0) == pdPASS) {
+      //   sendEventsPayload(_eventsPayload);
 
-      if (xQueueReceive(eventsQueue, &_eventsPayload, 0) == pdPASS) {
-        sendEventsPayload(_eventsPayload);
+      //   // Print events data
+      //   Serial.println("[LoRa] Events Payload Data:");
+      //   for (int i = 0; i < MAX_DCI; i++) {
+      //     Serial.printf("  DCI_%d: %s\n", i + 1, _eventsPayload.dciStates[i] ? "HIGH" : "LOW");
+      //   }
+      //   Serial.printf("  Temperature: %.2f °C\n", _eventsPayload.temperature);
+      //   Serial.printf("     Humidity: %.2f RH\n", _eventsPayload.humidity);
+      //   loraStat = UPLINK;
+      //   continue;
+      // }
 
-        // Print events data
-        Serial.println("[LoRa] Events Payload Data:");
+      // Priority 3.5: Compressed DCI Events
+      if (eventPending) {
+        Serial.println("[LoRa] Compressed DCI Event Payload:");
         for (int i = 0; i < MAX_DCI; i++) {
-          Serial.printf("  DCI_%d: %s\n", i + 1, _eventsPayload.dciStates[i] ? "HIGH" : "LOW");
+          Serial.printf("  DCI_%d: State=%s, RISE=%u, FALL=%u\n", i + 1,
+                        _compressedEventsPayload.dciInfo[i].currentState ? "HIGH" : "LOW",
+                        _compressedEventsPayload.dciInfo[i].lowToHighCount,
+                        _compressedEventsPayload.dciInfo[i].highToLowCount);
         }
-        Serial.printf("  Temperature: %.2f °C\n", _eventsPayload.temperature);
-        Serial.printf("     Humidity: %.2f RH\n", _eventsPayload.humidity);
+        Serial.printf("  Temperature: %.2f °C\n", _compressedEventsPayload.temperature);
+        Serial.printf("     Humidity: %.2f RH\n", _compressedEventsPayload.humidity);
+
+        sendCompressedEventsPayload(_compressedEventsPayload);
+
+        eventPending = false;
+
+        for (int i = 0; i < MAX_DCI; i++) {
+          _compressedEventsPayload.dciInfo[i].lowToHighCount = 0;
+          _compressedEventsPayload.dciInfo[i].highToLowCount = 0;
+        }
+
         loraStat = UPLINK;
         continue;
       }
@@ -104,17 +128,17 @@ void loraSenderTask(void* pvParameters) {
       // Priority 5: Diagnostics
 
       if (xQueueReceive(powerPayloadQueue, &_powerPayload, 0) == pdPASS) {
-        sendPowerPayload(_powerPayload); 
+        sendPowerPayload(_powerPayload);
 
 
 
         Serial.println("[LoRa] Power Payload Data:");
         Serial.printf("VBAT=%.2f,VIN=%.2f,VSYS=%.2f,IBAT=%.2f,IIN=%.2f \r\n",
-                 _powerPayload.vbat,
-                 _powerPayload.vin,
-                 _powerPayload.vsys,
-                 _powerPayload.ibat,
-                 _powerPayload.iin);
+                      _powerPayload.vbat,
+                      _powerPayload.vin,
+                      _powerPayload.vsys,
+                      _powerPayload.ibat,
+                      _powerPayload.iin);
         loraStat = UPLINK;
         continue;
       }
@@ -122,11 +146,9 @@ void loraSenderTask(void* pvParameters) {
       // If all queues are empty
       Serial.println("[LoRa] No data to send. All queues are empty.");
 
-    }else{
+    } else {
       Serial.println("Lora Handler Busy at the moment");
     }
-
-    
   }
 }
 
@@ -171,6 +193,29 @@ void sendEventsPayload(const EventsPayload& payload) {
     Serial.println("[LoRa] Sent Events Payload");
   }
 }
+
+void sendCompressedEventsPayload(CompressedEventsPayload& payload) {
+
+  compressedEventsPayload_s* _compressedEventPayloadPtr;
+  _compressedEventPayloadPtr = getCompressedEventsPayloadInstance();
+
+  _compressedEventPayloadPtr->eventOccured = DC_CHANGE_OF_STATE;
+
+  for (int i = 0; i < MAX_DCI; i++) {
+    _compressedEventPayloadPtr->dryContactStat[i].currentState = _compressedEventsPayload.dciInfo[i].currentState;
+    _compressedEventPayloadPtr->dryContactStat[i].riseCount = _compressedEventsPayload.dciInfo[i].lowToHighCount;
+    _compressedEventPayloadPtr->dryContactStat[i].fallCount = _compressedEventsPayload.dciInfo[i].highToLowCount;
+  }
+
+  _compressedEventPayloadPtr->temperature.all = (uint16_t)(_compressedEventsPayload.temperature * 10);
+  _compressedEventPayloadPtr->humidity.all = (uint16_t)(_compressedEventsPayload.humidity * 10);
+
+  if (isLoRaReady) {
+    processUplink(COMPRESSED_EVENTS, CONFIRMED_UPLINK);
+    Serial.println("[LoRa] Sent Compressed Events Payload");
+  }
+}
+
 
 void sendHeartbeatPayload(const HeartbeatPayload& payload) {
 

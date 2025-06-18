@@ -26,6 +26,19 @@ struct HeartbeatPayload {
   float humidity;
 };
 
+
+struct DCIEventInfo{
+  bool currentState;
+  uint16_t lowToHighCount;
+  uint16_t highToLowCount;
+};
+
+struct CompressedEventsPayload{
+  DCIEventInfo dciInfo[MAX_DCI];
+  float temperature;
+  float humidity;
+};
+
 // Payload structure for Passkey Entry
 typedef struct PassKeyPayload
 {
@@ -58,3 +71,4 @@ void sendEventsPayload(const EventsPayload& payload);
 void sendHeartbeatPayload(const HeartbeatPayload& payload);
 void sendPasskeyPayload(const PassKeyPayload& payload);
 void sendPowerPayload(const PowerPayload& payload);
+void sendCompressedEventsPayload(CompressedEventsPayload& payload);

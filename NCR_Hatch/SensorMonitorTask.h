@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "LoRaSenderTask.h"
 
 // Dry Contact Pins (define or include from your pin config)
 #define DCI_1 33
@@ -34,6 +35,9 @@ SensorReadings getSensorReadings();
 
 void stopHotAlarmTimer();
 void startSirenCooldownTimer();
+
+extern CompressedEventsPayload _compressedEventsPayload;
+extern bool eventPending;
 
 
 enum TheftAlarmType {

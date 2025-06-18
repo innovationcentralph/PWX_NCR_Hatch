@@ -18,6 +18,11 @@ eventsPayload_s * getEventsPayloadInstance()
     return &eventsPayload; 
 }
 
+compressedEventsPayload_s * getCompressedEventsPayloadInstance()
+{
+    return &compressedEventsPayload; 
+}
+
 diagnosticPayload_s * getDiagnosticPayloadInstance()
 {
     return &diagnosticPayload; 
