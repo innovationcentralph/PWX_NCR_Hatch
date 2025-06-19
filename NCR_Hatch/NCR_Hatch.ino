@@ -8,6 +8,9 @@
 #include <Wire.h>
 #include "lorawan_handler.h"
 
+#define VERSION_MAJOR     1
+#define VERSION_MINOR     1
+#define PATCHLEVEL        0
 /* Fixed Credentials */
 bool isLoRaReady = false;  // Set true after LoRa is initialized
 
@@ -34,7 +37,11 @@ void loraInitTask(void* pvParameters) {
 }
 
 void setup() {
+
   Serial.begin(115200);
+
+  String ver = "Firmware Version: " + String(VERSION_MAJOR) + "." + String(VERSION_MINOR) + "." + String(PATCHLEVEL);
+  Serial.println(ver);
 
   pinMode(WDT_DONE, OUTPUT);
   digitalWrite(WDT_DONE, LOW);

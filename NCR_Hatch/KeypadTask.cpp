@@ -9,8 +9,8 @@
 #include "lorawan_handler.h"
 
 #define BACKLIGHT_TIMEOUT  20000
-// #define LORA_STAT_DISP_EN // uncomment to enable display of lora stat on lcd
-// #define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout 
+#define LORA_STAT_DISP_EN // uncomment to enable display of lora stat on lcd
+#define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout 
 
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);
