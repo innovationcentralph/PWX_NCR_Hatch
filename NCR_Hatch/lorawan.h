@@ -66,8 +66,8 @@ typedef union
 
 typedef struct
 {
-    uint16_t riseCount;       // LOW → HIGH transitions
-    uint16_t fallCount;       // HIGH → LOW transitions
+    uint8_t riseCount;       // LOW → HIGH transitions
+    uint8_t fallCount;       // HIGH → LOW transitions
     bool currentState;        // Latest known state (HIGH or LOW)
 } dryContactCompressed_s;
 

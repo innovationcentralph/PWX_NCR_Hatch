@@ -108,13 +108,26 @@ function Decoder(bytes, port) {
             decoded.HUMIDITY= toInt16LE(data[2], data[3])/10; 
             data = data.slice(4);
             decoded.MAX_DCI = data[0];
-           
+            data = data.slice(1);
+            var offset = 0; 
+            decoded.DC_COMPRESSED = []; 
             for(var i = 0; i < decoded.MAX_DCI; i ++)
             {
-                data = data.slice(1);
-                decoded.DC_COMPRESSED[i].CURRENT_STATE = data[0];
-                decoded.DC_COMPRESSED[i].FALL_COUNT= toInt16LE(data[1], data[2])/10; 
-                decoded.DC_COMPRESSED[i].RISE_COUNT= toInt16LE(data[3], data[3])/10; 
+                
+               if (data.length < decoded.MAX_DCI) {  // Protect against out-of-bounds access
+                    decoded.DC_COMPRESSED.push({ error: "Insufficient data for entry " + i });
+                    break;
+                }
+
+                let entry = {
+                    CURRENT_STATE: data[0],
+                    FALL_COUNT: data[1],
+                    RISE_COUNT: data[2]
+                };
+
+                decoded.DC_COMPRESSED.push(entry);
+
+                data = data.slice(5); // Move to the next block
             }
         } 
         else if (data[0] === 0xA7){
