@@ -123,6 +123,19 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             txBuffer[len++]= eventsPayload.humidity.lower; 
             txBuffer[len++]= (uint8_t)eventsPayload.dryContactStat.all; 
             break;
+        case COMPRESSED_EVENTS:
+            txBuffer[len++]= (uint8_t)COMPRESSED_EVENTS;
+            txBuffer[len++]= compressedEventsPayload.eventOccured; 
+            txBuffer[len++]= compressedEventsPayload.temperature.upper;
+            txBuffer[len++]= compressedEventsPayload.temperature.lower;
+            txBuffer[len++]= compressedEventsPayload.humidity.upper; 
+            txBuffer[len++]= compressedEventsPayload.humidity.lower; 
+            txBuffer[len++]= MAX_DCI; 
+            for(int i = 0; i < MAX_DCI; i++)
+            {
+                txBuffer[len++]= compressedEventsPayload.dryContactStat[i].all;
+            }
+            break; 
         case KEYS:
             // printf("Events\n\r"); 
             txBuffer[len++]= (uint8_t)KEYS; 

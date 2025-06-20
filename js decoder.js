@@ -81,14 +81,45 @@ function Decoder(bytes, port) {
             decoded.TEMPERATURE= toInt16LE(data[0], data[1])/10; 
             decoded.HUMIDITY= toInt16LE(data[2], data[3])/10; 
 
-            decoded.DC1= data[4] & 0x01 ? "ON" : "OFF";
-            decoded.DC2= data[4] & 0x02 ? "ON" : "OFF";
-            decoded.DC3= data[4] & 0x04 ? "ON" : "OFF";
-            decoded.DC4= data[4] & 0x08 ? "ON" : "OFF";
-            decoded.DC5= data[4] & 0x10 ? "ON" : "OFF";
-            decoded.DC6= data[4] & 0x20 ? "ON" : "OFF";
+            decoded.DCI_STATES.DC1= data[4] & 0x01 ? "ON" : "OFF";
+            decoded.DCI_STATES.DC2= data[4] & 0x02 ? "ON" : "OFF";
+            decoded.DCI_STATES.DC3= data[4] & 0x04 ? "ON" : "OFF";
+            decoded.DCI_STATES.DC4= data[4] & 0x08 ? "ON" : "OFF";
+            decoded.DCI_STATES.DC5= data[4] & 0x10 ? "ON" : "OFF";
+            decoded.DCI_STATES.DC6= data[4] & 0x20 ? "ON" : "OFF";
         } 
-        else if (data[0] === 0xA6){
+        else if (data[0] === 0xA6){ // change ng dry contact. tapos copy paste heart beat 
+            decoded.PAYLOAD_TYPE = "COMPRESSED EVENTS"; 
+            data = data.slice(1);
+            if(data[0] == 0x00){
+                decoded.EVENT_TYPE = "NO EVENT";
+            }
+            else if(data[0] == 0x01){
+                decoded.EVENT_TYPE = "DC CHANGE OF STATE";
+            }
+            else if(data[0] == 0x02){
+                decoded.EVENT_TYPE = "TEMP_THRESHOLD";
+            }
+            else if(data[0] == 0x03){
+                decoded.EVENT_TYPE = "HUM_THRESHOLD";
+            }
+            data = data.slice(1);
+            decoded.TEMPERATURE= toInt16LE(data[0], data[1])/10; 
+            decoded.HUMIDITY= toInt16LE(data[2], data[3])/10; 
+            data = data.slice(4);
+            decoded.MAX_DCI = data[0];
+            data = data.slice(1);
+            for(var i = 0; i < decoded.MAX_DCI; i ++)
+            {
+                decoded.DCI_STATES[i].DC1= data[i] & 0x01 ? "ON" : "OFF";
+                decoded.DCI_STATES[i].DC2= data[i] & 0x02 ? "ON" : "OFF";
+                decoded.DCI_STATES[i].DC3= data[i] & 0x04 ? "ON" : "OFF";
+                decoded.DCI_STATES[i].DC4= data[i] & 0x08 ? "ON" : "OFF";
+                decoded.DCI_STATES[i].DC5= data[i] & 0x10 ? "ON" : "OFF";
+                decoded.DCI_STATES[i].DC6= data[i] & 0x20 ? "ON" : "OFF";
+            }
+        } 
+        else if (data[0] === 0xA7){
             decoded.PAYLOAD_TYPE = "KEYS"; 
             data = data.slice(1);
             decoded.PASSKEY_TYPE = data[0] & 0x1? "INCORRECT PASSKEY": "CORRECT PASSKEY" ;

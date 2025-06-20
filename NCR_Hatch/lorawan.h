@@ -27,7 +27,7 @@ typedef enum
 	HEARTBEAT,// (Un confirmed uplink every 15mins)
 	DIAGNOSTIC,
 	EVENTS,
-  COMPRESSED_EVENTS, 
+    COMPRESSED_EVENTS, 
     KEYS,
 
 } PAYLOAD_TYPE;
@@ -38,7 +38,6 @@ typedef enum
     DC_CHANGE_OF_STATE,
     TEMP_THRESHOLD, 
     HUM_THRESHOLD,
-    
 }EVENT_TYPE; 
 typedef enum 
 {

@@ -104,7 +104,7 @@ void loraSenderTask(void* pvParameters) {
           _compressedEventsPayload.dciInfo[i].lowToHighCount = 0;
           _compressedEventsPayload.dciInfo[i].highToLowCount = 0;
         }
-
+ 
         loraStat = UPLINK;
         continue;
       }
