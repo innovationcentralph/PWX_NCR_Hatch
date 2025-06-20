@@ -8,15 +8,11 @@
 #include <LiquidCrystal_I2C.h>
 #include "lorawan_handler.h"
 
-<<<<<<< HEAD
-#define BACKLIGHT_TIMEOUT 20000
-// #define LORA_STAT_DISP_EN // uncomment to enable display of lora stat on lcd
-// #define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout
-=======
+
 #define BACKLIGHT_TIMEOUT  20000
 #define LORA_STAT_DISP_EN // uncomment to enable display of lora stat on lcd
 #define BACKLIGHT_TIMEOUT_EN // uncomment to enable backglight timeout 
->>>>>>> feature/lcdImprovements
+
 
 #define I2C_ADDR 0x27
 I2CKeyPad keyPad(I2C_ADDR);

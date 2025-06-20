@@ -108,15 +108,13 @@ function Decoder(bytes, port) {
             decoded.HUMIDITY= toInt16LE(data[2], data[3])/10; 
             data = data.slice(4);
             decoded.MAX_DCI = data[0];
-            data = data.slice(1);
+           
             for(var i = 0; i < decoded.MAX_DCI; i ++)
             {
-                decoded.DCI_STATES[i].DC1= data[i] & 0x01 ? "ON" : "OFF";
-                decoded.DCI_STATES[i].DC2= data[i] & 0x02 ? "ON" : "OFF";
-                decoded.DCI_STATES[i].DC3= data[i] & 0x04 ? "ON" : "OFF";
-                decoded.DCI_STATES[i].DC4= data[i] & 0x08 ? "ON" : "OFF";
-                decoded.DCI_STATES[i].DC5= data[i] & 0x10 ? "ON" : "OFF";
-                decoded.DCI_STATES[i].DC6= data[i] & 0x20 ? "ON" : "OFF";
+                data = data.slice(1);
+                decoded.DC_COMPRESSED[i].CURRENT_STATE = data[0];
+                decoded.DC_COMPRESSED[i].FALL_COUNT= toInt16LE(data[1], data[2])/10; 
+                decoded.DC_COMPRESSED[i].RISE_COUNT= toInt16LE(data[3], data[3])/10; 
             }
         } 
         else if (data[0] === 0xA7){
