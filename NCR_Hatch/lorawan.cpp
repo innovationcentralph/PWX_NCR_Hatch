@@ -134,8 +134,8 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             for(int i = 0; i < MAX_DCI; i++)
             {
                 txBuffer[len++]= compressedEventsPayload.dryContactStat[i].currentState;
-                txBuffer[len++]= compressedEventsPayload.dryContactStat[i].fallCount
-                txBuffer[len++]= compressedEventsPayload.dryContactStat[i].riseCount
+                txBuffer[len++]= compressedEventsPayload.dryContactStat[i].fallCount;
+                txBuffer[len++]= compressedEventsPayload.dryContactStat[i].riseCount;
             }
             break; 
         case KEYS:

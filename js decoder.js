@@ -114,7 +114,7 @@ function Decoder(bytes, port) {
             for(var i = 0; i < decoded.MAX_DCI; i ++)
             {
                 
-               if (data.length < decoded.MAX_DCI) {  // Protect against out-of-bounds access
+               if (data.length < 3) {  // Protect against out-of-bounds access
                     decoded.DC_COMPRESSED.push({ error: "Insufficient data for entry " + i });
                     break;
                 }
@@ -127,7 +127,7 @@ function Decoder(bytes, port) {
 
                 decoded.DC_COMPRESSED.push(entry);
 
-                data = data.slice(5); // Move to the next block
+                data = data.slice(3); // Move to the next block
             }
         } 
         else if (data[0] === 0xA7){
