@@ -85,7 +85,7 @@ void loraSenderTask(void* pvParameters) {
       // }
 
       // Priority 3.5: Compressed DCI Events
-      if (eventPending) {
+      if (eventPending || tapDetected) {
         Serial.println("[LoRa] Compressed DCI Event Payload:");
         for (int i = 0; i < MAX_DCI; i++) {
           Serial.printf("  DCI_%d: State=%s, RISE=%u, FALL=%u\n", i + 1,
@@ -95,15 +95,19 @@ void loraSenderTask(void* pvParameters) {
         }
         Serial.printf("  Temperature: %.2f °C\n", _compressedEventsPayload.temperature);
         Serial.printf("     Humidity: %.2f RH\n", _compressedEventsPayload.humidity);
+        Serial.printf("    Vibration: %d \n", _compressedEventsPayload.vibration);
+
 
         sendCompressedEventsPayload(_compressedEventsPayload);
 
         eventPending = false;
+        tapDetected  = false;
 
         for (int i = 0; i < MAX_DCI; i++) {
           _compressedEventsPayload.dciInfo[i].lowToHighCount = 0;
           _compressedEventsPayload.dciInfo[i].highToLowCount = 0;
         }
+        _compressedEventsPayload.vibration = IDLE;
  
         loraStat = UPLINK;
         continue;
@@ -209,6 +213,7 @@ void sendCompressedEventsPayload(CompressedEventsPayload& payload) {
 
   _compressedEventPayloadPtr->temperature.all = (uint16_t)(_compressedEventsPayload.temperature * 10);
   _compressedEventPayloadPtr->humidity.all = (uint16_t)(_compressedEventsPayload.humidity * 10);
+  _compressedEventPayloadPtr->vibration = _compressedEventsPayload.smoke;
 
   if (isLoRaReady) {
     processUplink(COMPRESSED_EVENTS, CONFIRMED_UPLINK);

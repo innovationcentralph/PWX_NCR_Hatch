@@ -38,11 +38,18 @@ void startSirenCooldownTimer();
 
 extern CompressedEventsPayload _compressedEventsPayload;
 extern bool eventPending;
+extern bool tapDetected;
 
 
 enum TheftAlarmType {
   HATCH_OPEN,
   KEY_SILENT_ALARM
+};
+
+enum AccelAlarmType {
+  IDLE,
+  SMASHED,
+  MOVING
 };
 
 void enqueueTheftAlarm(TheftAlarmType type);  // Updated declaration

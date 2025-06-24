@@ -6,9 +6,13 @@
 #include "Adafruit_SHT4x.h"
 #include "PinConfig.h"
 #include "SystemConfig.h"
+#include <DFRobot_LIS2DW12.h>
+#include "ADS1X15.h"
 
 //Instance creation
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
+DFRobot_LIS2DW12_I2C acce(&Wire, 0x18);
+ADS1015 ADS(0x48);
 
 static TimerHandle_t hotAlarmTimer = NULL;
 static bool hotCooldownActive = false;
@@ -16,10 +20,12 @@ static TimerHandle_t hotCooldownTimer = NULL;
 
 CompressedEventsPayload _compressedEventsPayload;
 bool eventPending = false;
+bool tapDetected = false;
 
 
 //Function Prototypes
 uint16_t readLTC4015(uint8_t reg);
+void tapTask(void *pvParameters);
 
 #define NUM_DCI 6
 
@@ -122,7 +128,7 @@ void monitorDryContactsTask(void *pvParameters) {
           // Serial.printf("     Humidity: %.2f RH\n", compressedEventsPayload.humidity);
 
 
-          eventPending = true;  
+          eventPending = true;
 
 
           bool hotTriggered = false;
@@ -201,9 +207,31 @@ void monitorSHTSensorTask(void *pvParameters) {
     currentSensorReadings.temperature = temp.temperature;
     currentSensorReadings.humidity = humidity.relative_humidity;
 
-    // Serial.printf("[TEMP/HUM] Temperature: %.2f °C | Humidity: %.2f %%RH\n",
-    //               currentSensorReadings.temperature,
-    //               currentSensorReadings.humidity);
+    // Monitor ADC
+    int16_t val_0 = ADS.readADC(0);
+    int16_t val_1 = ADS.readADC(1);
+    int16_t val_2 = ADS.readADC(2);
+    int16_t val_3 = ADS.readADC(3);
+
+    float f = ADS.toVoltage(1);  //  voltage factor
+
+    Serial.print("\tAnalog0: ");
+    Serial.print(val_0);
+    Serial.print('\t');
+    Serial.println(val_0 * f, 3);
+    Serial.print("\tAnalog1: ");
+    Serial.print(val_1);
+    Serial.print('\t');
+    Serial.println(val_1 * f, 3);
+    Serial.print("\tAnalog2: ");
+    Serial.print(val_2);
+    Serial.print('\t');
+    Serial.println(val_2 * f, 3);
+    Serial.print("\tAnalog3: ");
+    Serial.print(val_3);
+    Serial.print('\t');
+    Serial.println(val_3 * f, 3);
+    Serial.println();
 
     vTaskDelay(pdMS_TO_TICKS(2000));
   }
@@ -278,6 +306,47 @@ uint16_t readLTC4015(uint8_t reg) {
 
 
 void createSensorTasks() {
+
+  // Initialize Accelerometer
+  ADS.begin();
+  ADS.setGain(0);
+
+  // Initialize Accelerometer
+  while (!acce.begin()) {
+    Serial.println("Cannot Read Accelerometer");
+    delay(1000);
+  }
+  Serial.print("Accelerometer ID : ");
+  Serial.println(acce.getID(), HEX);
+  //Chip soft reset
+  acce.softReset();
+
+  acce.setRange(DFRobot_LIS2DW12::e2_g);
+  acce.setPowerMode(DFRobot_LIS2DW12::eContLowPwrLowNoise1_12bit);
+  acce.setDataRate(DFRobot_LIS2DW12::eRate_800hz);
+
+  acce.enableTapDetectionOnZ(true);
+  acce.enableTapDetectionOnY(true);
+  acce.enableTapDetectionOnX(true);
+
+  acce.setTapThresholdOnX(0.5);
+  acce.setTapThresholdOnY(0.5);
+  acce.setTapThresholdOnZ(0.5);
+
+
+  acce.setTapDur(/*dur=*/6);
+  acce.setTapMode(DFRobot_LIS2DW12::eOnlySingle);
+  acce.setInt1Event(DFRobot_LIS2DW12::eDoubleTap);
+
+  xTaskCreatePinnedToCore(
+    tapTask,    // Function
+    "TapTask",  // Task name
+    2048,       // Stack size
+    NULL,       // Parameters
+    1,          // Priority
+    NULL,       // Task handle
+    0           // Run on core 1
+  );
 
   hotAlarmTimer = xTimerCreate(
     "HotAlarmTimer",
@@ -355,5 +424,42 @@ void startSirenCooldownTimer() {
     hotCooldownActive = true;
     xTimerStart(hotCooldownTimer, 0);
     Serial.println("[HOT] Cooldown timer started.");
+  }
+}
+
+
+void handleTap() {
+  // tap detected
+  DFRobot_LIS2DW12::eTap_t tapEvent = acce.tapDetect();
+  DFRobot_LIS2DW12::eTapDir_t dir = acce.getTapDirection();
+
+  if (tapEvent == DFRobot_LIS2DW12::eSTap) {
+    Serial.print("Single Tap Detected: ");
+    _compressedEventsPayload.vibration = SMASHED;
+    tapDetected = true;
+  }
+
+  if (tapEvent != DFRobot_LIS2DW12::eNoTap) {
+    if (dir == DFRobot_LIS2DW12::eDirXUp) {
+      //Serial.println("tap detected!");
+    } else if (dir == DFRobot_LIS2DW12::eDirXDown) {
+      //Serial.println("tap detected!");
+    } else if (dir == DFRobot_LIS2DW12::eDirYUp) {
+      //Serial.println("tap detected!");
+    } else if (dir == DFRobot_LIS2DW12::eDirYDown) {
+      //Serial.println("tap detected!");
+    } else if (dir == DFRobot_LIS2DW12::eDirZUp) {
+      //Serial.println("tap detected!");
+    } else if (dir == DFRobot_LIS2DW12::eDirZDown) {
+      //Serial.println("tap detected!");
+    }
+    vTaskDelay(100 / portTICK_PERIOD_MS);  //prevent spamming
+  }
+}
+
+void tapTask(void *pvParameters) {
+  while (1) {
+    handleTap();  // Tap detection logic
+    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
