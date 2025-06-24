@@ -44,13 +44,15 @@ function Decoder(bytes, port) {
             data = data.slice(1);
             decoded.TEMPERATURE= toInt16LE(data[0], data[1]) / 10; 
             decoded.HUMIDITY= toInt16LE(data[2], data[3]) / 10 ; 
-            decoded.SIREN= data[4]; 
-            decoded.DC1= data[5] & 0x01 ? "ON" : "OFF";
-            decoded.DC2= data[5] & 0x02 ? "ON" : "OFF";
-            decoded.DC3= data[5] & 0x04 ? "ON" : "OFF";
-            decoded.DC4= data[5] & 0x08 ? "ON" : "OFF";
-            decoded.DC5= data[5] & 0x10 ? "ON" : "OFF";
-            decoded.DC6= data[5] & 0x20 ? "ON" : "OFF";
+            decoded.SMOKE = data[4]; 
+            decoded.VIBRATION = data[5]; 
+            decoded.SIREN= data[6]; 
+            decoded.DC1= data[7] & 0x01 ? "ON" : "OFF";
+            decoded.DC2= data[7] & 0x02 ? "ON" : "OFF";
+            decoded.DC3= data[7] & 0x04 ? "ON" : "OFF";
+            decoded.DC4= data[7] & 0x08 ? "ON" : "OFF";
+            decoded.DC5= data[7] & 0x10 ? "ON" : "OFF";
+            decoded.DC6= data[7] & 0x20 ? "ON" : "OFF";
 
         } 
         else if (data[0] === 0xA4){
@@ -103,10 +105,19 @@ function Decoder(bytes, port) {
             else if(data[0] == 0x03){
                 decoded.EVENT_TYPE = "HUM_THRESHOLD";
             }
+            else if(data[0] == 0x04){
+                decoded.EVENT_TYPE = "SMOKE_THRESHOLD";
+            }
+            else if(data[0] == 0x05){
+                decoded.EVENT_TYPE = "VIBRATION_THRESHOLD";
+            }
             data = data.slice(1);
             decoded.TEMPERATURE= toInt16LE(data[0], data[1])/10; 
             decoded.HUMIDITY= toInt16LE(data[2], data[3])/10; 
             data = data.slice(4);
+            decoded.SMOKE = data[0]; 
+            decoded.VIBRATION = data[1]; 
+            data = data.slice(2);
             decoded.MAX_DCI = data[0];
             data = data.slice(1);
             var offset = 0; 

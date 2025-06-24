@@ -38,6 +38,8 @@ typedef enum
     DC_CHANGE_OF_STATE,
     TEMP_THRESHOLD, 
     HUM_THRESHOLD,
+    VIBRATION_THRESHOLD,
+    SMOKE_THRESHOLD,
 }EVENT_TYPE; 
 typedef enum 
 {
@@ -115,6 +117,8 @@ typedef struct
     EVENT_TYPE eventOccured;
     int16 temperature; 
     int16 humidity; 
+    uint8_t smoke; 
+    uint8_t vibration;
     dryContactCompressed_s dryContactStat[MAX_DCI];
 }compressedEventsPayload_s; 
 
@@ -132,6 +136,8 @@ typedef struct
 {
     int16 temperature; 
     int16 humidity; 
+    uint8_t smoke; 
+    uint8_t vibration;
     uint8_t siren;
     dryContact_u dryContactStat; 
 }hearbeatPayload_s; 

@@ -96,6 +96,8 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             txBuffer[len++]=heartbeatPayload.temperature.lower; 
             txBuffer[len++]=heartbeatPayload.humidity.upper; 
             txBuffer[len++]=heartbeatPayload.humidity.lower; 
+            txBuffer[len++]=heartbeatPayload.smoke;
+            txBuffer[len++]=heartbeatPayload.vibration;
             txBuffer[len++]=heartbeatPayload.siren; 
             txBuffer[len++]=heartbeatPayload.dryContactStat.all; 
 
@@ -130,6 +132,8 @@ int processUplink(PAYLOAD_TYPE payloadType, UPLINK_TYPE uplinkType)
             txBuffer[len++]= compressedEventsPayload.temperature.lower;
             txBuffer[len++]= compressedEventsPayload.humidity.upper; 
             txBuffer[len++]= compressedEventsPayload.humidity.lower; 
+            txBuffer[len++]= compressedEventsPayload.smoke;
+            txBuffer[len++]= compressedEventsPayload.vibration;
             txBuffer[len++]= MAX_DCI; 
             for(int i = 0; i < MAX_DCI; i++)
             {
