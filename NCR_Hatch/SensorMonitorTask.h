@@ -39,7 +39,7 @@ void startSirenCooldownTimer();
 extern CompressedEventsPayload _compressedEventsPayload;
 extern bool eventPending;
 extern bool tapDetected;
-
+extern bool smokeTriggered;
 
 enum TheftAlarmType {
   HATCH_OPEN,

@@ -15,7 +15,7 @@
 /* LoRaWAN Credentials*/
 
 uint16_t txInterval = 60000; 
-
+uint8_t init_fail_counter = 0; 
 HardwareSerial lorawanSerial(2);
 
 /* holder for */
@@ -651,7 +651,15 @@ int checkResponse (char * buffer, ERROR_MSGS errMsg)
       Serial.print(errMsg);
       Serial.print("]");
       Serial.print(buffer);
-
+      init_fail_counter++; 
+      if(init_fail_counter > 3)
+      {
+        init_fail_counter=0;
+        Serial.print("Reset");
+        lorawanSerial.print("ATZ\r");
+        vTaskDelay(pdMS_TO_TICKS(10));
+        ESP.restart();
+      }
       return errMsg; 
     }
   }

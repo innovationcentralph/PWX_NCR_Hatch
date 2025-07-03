@@ -9,6 +9,9 @@
 #include <DFRobot_LIS2DW12.h>
 #include "ADS1X15.h"
 
+#define SMOKE_THRESHOLD 335//409
+
+
 //Instance creation
 Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 DFRobot_LIS2DW12_I2C acce(&Wire, 0x18);
@@ -22,6 +25,10 @@ CompressedEventsPayload _compressedEventsPayload;
 bool eventPending = false;
 bool tapDetected = false;
 
+//smoke 
+uint8_t smokeDebounce =0 ; 
+bool smokeTriggered = false;
+bool smokeTransition = false; 
 
 //Function Prototypes
 uint16_t readLTC4015(uint8_t reg);
@@ -114,8 +121,8 @@ void monitorDryContactsTask(void *pvParameters) {
 
           // Update temp/hum for snapshot
           SensorReadings snapshot = getSensorReadings();
-          _compressedEventsPayload.temperature = snapshot.temperature;
-          _compressedEventsPayload.humidity = snapshot.humidity;
+          _compressedEventsPayload.temperature = currentSensorReadings.temperature; //snapshot.temperature;
+          _compressedEventsPayload.humidity = currentSensorReadings.humidity;// snapshot.humidity;
 
           // Serial.println("[EVENT] Compressed DCI Event Payload:");
           // for (int i = 0; i < MAX_DCI; i++) {
@@ -232,6 +239,34 @@ void monitorSHTSensorTask(void *pvParameters) {
     Serial.print('\t');
     Serial.println(val_3 * f, 3);
     Serial.println();
+
+    int16_t smoke_val = val_0; //random(0, 1023);
+    Serial.print("Smoke Val: ");
+    Serial.println(smoke_val);
+    if(smoke_val >= SMOKE_THRESHOLD)
+    {
+      smokeDebounce++; 
+      Serial.print("Smoke debounce: ");
+      Serial.println(smokeDebounce);
+    }else if (smoke_val < SMOKE_THRESHOLD){
+      smokeDebounce= 0;
+      if((!smokeTriggered) && (smokeTransition))
+      {
+        _compressedEventsPayload.smoke = 0;
+        smokeTriggered = true; 
+        smokeTransition = false; 
+        Serial.print("No Smoke Detected! \n");
+      }
+    }
+
+    if((smokeDebounce >= 3) && (!smokeTransition) )
+    {
+      smokeTransition = true; 
+      smokeTriggered = true; 
+      smokeDebounce=0; 
+      _compressedEventsPayload.smoke = 1; 
+      Serial.print("Smoke Detected! \n");
+    }
 
     vTaskDelay(pdMS_TO_TICKS(2000));
   }
@@ -436,6 +471,9 @@ void handleTap() {
   if (tapEvent == DFRobot_LIS2DW12::eSTap) {
     Serial.print("Single Tap Detected: ");
     _compressedEventsPayload.vibration = SMASHED;
+    _compressedEventsPayload.temperature = currentSensorReadings.temperature; //snapshot.temperature;
+    _compressedEventsPayload.humidity = currentSensorReadings.humidity;// snapshot.humidity;
+
     tapDetected = true;
   }
 
