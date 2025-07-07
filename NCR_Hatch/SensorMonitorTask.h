@@ -22,6 +22,8 @@ struct DryContactInput {
 struct SensorReadings {
   float temperature;
   float humidity;
+  uint8_t smoke; 
+  uint8_t vibration;
   bool dciStates[6];
   
 };

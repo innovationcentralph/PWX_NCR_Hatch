@@ -24,6 +24,8 @@ struct HeartbeatPayload {
   bool dciStates[MAX_DCI];
   float temperature;
   float humidity;
+  uint8_t smoke; 
+  uint8_t vibration;
 };
 
 

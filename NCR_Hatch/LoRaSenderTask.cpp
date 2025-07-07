@@ -136,6 +136,8 @@ void loraSenderTask(void* pvParameters) {
           }
           Serial.printf("  Temperature: %.2f °C\n", _heartbeatPayload.temperature);
           Serial.printf("     Humidity: %.2f °C\n", _heartbeatPayload.humidity);
+          Serial.printf("    Vibration: %.2f °C\n", _heartbeatPayload.vibration);
+          Serial.printf("        Smoke: %.2f °C\n", _heartbeatPayload.smoke);
           loraStat = UPLINK;
           continue;
         }
@@ -246,6 +248,8 @@ void sendHeartbeatPayload(const HeartbeatPayload& payload) {
   _hbPayloadPtr = heartbeatPayloadInstance();
   _hbPayloadPtr->temperature.all = (uint16_t)(_heartbeatPayload.temperature * 10);
   _hbPayloadPtr->humidity.all = (uint16_t)(_heartbeatPayload.humidity * 10);
+  _hbPayloadPtr->vibration = _heartbeatPayload.vibration;
+  _hbPayloadPtr->smoke = _heartbeatPayload.smoke;
   _hbPayloadPtr->siren = 0;  // placeholder
   _hbPayloadPtr->dryContactStat.dc1 = _heartbeatPayload.dciStates[0];
   _hbPayloadPtr->dryContactStat.dc2 = _heartbeatPayload.dciStates[1];

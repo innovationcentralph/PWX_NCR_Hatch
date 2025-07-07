@@ -17,6 +17,7 @@ Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 DFRobot_LIS2DW12_I2C acce(&Wire, 0x18);
 ADS1015 ADS(0x48);
 
+
 static TimerHandle_t hotAlarmTimer = NULL;
 static bool hotCooldownActive = false;
 static TimerHandle_t hotCooldownTimer = NULL;
@@ -253,6 +254,7 @@ void monitorSHTSensorTask(void *pvParameters) {
       if((!smokeTriggered) && (smokeTransition))
       {
         _compressedEventsPayload.smoke = 0;
+        currentSensorReadings.smoke = 0; 
         smokeTriggered = true; 
         smokeTransition = false; 
         Serial.print("No Smoke Detected! \n");
@@ -265,6 +267,7 @@ void monitorSHTSensorTask(void *pvParameters) {
       smokeTriggered = true; 
       smokeDebounce=0; 
       _compressedEventsPayload.smoke = 1; 
+      currentSensorReadings.smoke = 1; 
       Serial.print("Smoke Detected! \n");
     }
 
@@ -289,6 +292,9 @@ void enqueueHeartbeatEvery(TickType_t intervalMs) {
         memcpy(hb.dciStates, snapshot.dciStates, sizeof(hb.dciStates));
         hb.temperature = snapshot.temperature;
         hb.humidity = snapshot.humidity;
+        hb.vibration = snapshot.vibration;
+        hb.smoke = snapshot.smoke;
+
 
         xQueueSend(heartbeatQueue, &hb, 0);
         Serial.println("[Heartbeat] Enqueued");
@@ -473,9 +479,11 @@ void handleTap() {
     _compressedEventsPayload.vibration = SMASHED;
     _compressedEventsPayload.temperature = currentSensorReadings.temperature; //snapshot.temperature;
     _compressedEventsPayload.humidity = currentSensorReadings.humidity;// snapshot.humidity;
-
+    
     tapDetected = true;
   }
+
+  currentSensorReadings.vibration = _compressedEventsPayload.vibration ; 
 
   if (tapEvent != DFRobot_LIS2DW12::eNoTap) {
     if (dir == DFRobot_LIS2DW12::eDirXUp) {
